@@ -1,20 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Save, Trash2, Upload } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useDialog } from './DialogContext';
 
 export default function UserManagementModal({ onClose }: { onClose: () => void }) {
-  const [users, setUsers] = useState<any[]>([]);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [formData, setFormData] = useState({ name: '', login_id: '', password: '', department: '', role: '一般' });
   const { showAlert, showConfirm } = useDialog();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  
+  const [id, setId] = useState<number | null>(null);
+  const [loginId, setLoginId] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [department, setDepartment] = useState('');
+  const [role, setRole] = useState('一般');
+
+  const sanitizeAlphanumericAndSymbols = (str: string) => {
+    if (!str) return '';
+    let halfVal = str.replace(/[！-～]/g, function(s) {
+      return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+    });
+    return halfVal.replace(/[^\x20-\x7E]/g, '');
+  };
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch('/api/users');
-      if (res.ok) setUsers(await res.json());
+      const res = await fetch('api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_users' })
+      });
+      const data = await res.json();
+      setUsers(data);
     } catch (error) {
-      showAlert('ユーザー情報の取得に失敗しました');
+      showAlert('ユーザー情報の取得に失敗しました。');
     }
   };
 
@@ -23,149 +39,150 @@ export default function UserManagementModal({ onClose }: { onClose: () => void }
   }, []);
 
   const handleSave = async () => {
-    if (!formData.name || !formData.login_id || (!editingId && !formData.password)) {
-      showAlert('必須項目を入力してください');
-      return;
+    if (!loginId || !name || !department) {
+      return showAlert('ログインID、氏名、部署は必須です。');
+    }
+    if (!id && !password) {
+      return showAlert('新規登録時はパスワードを入力してください。');
     }
 
     try {
-      const url = editingId ? `/api/users/${editingId}` : '/api/users';
-      const method = editingId ? 'PUT' : 'POST';
-      const res = await fetch(url, {
-        method,
+      await fetch('api.php', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ 
+          action: 'save_user', 
+          id, 
+          login_id: loginId, 
+          password, 
+          name, 
+          department, 
+          role 
+        })
       });
-      const data = await res.json();
-      if (data.status === 'success') {
-        fetchUsers();
-        setEditingId(null);
-        setFormData({ name: '', login_id: '', password: '', department: '', role: '一般' });
-      } else {
-        showAlert(data.error || '保存に失敗しました');
-      }
+      resetForm();
+      fetchUsers();
+      showAlert('ユーザー情報を保存しました。');
     } catch (error) {
-      showAlert('サーバーエラーが発生しました');
+      showAlert('保存に失敗しました。');
     }
   };
 
-  const handleDelete = (id: number) => {
-    showConfirm('このユーザーを削除しますか？', async () => {
+  const handleEdit = (u: any) => {
+    setId(u.id);
+    setLoginId(u.login_id);
+    setPassword(''); // 編集時はパスワードは空（変更する場合のみ入力）
+    setName(u.name);
+    setDepartment(u.department || '');
+    setRole(u.role);
+  };
+
+  const handleDelete = async (deleteId: number) => {
+    showConfirm('このユーザーを削除しますか？\n（※管理者は最低1人必要です）', async () => {
       try {
-        const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
-        if (res.ok) fetchUsers();
+        await fetch('api.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete_user', id: deleteId })
+        });
+        if (id === deleteId) resetForm();
+        fetchUsers();
       } catch (error) {
-        showAlert('削除に失敗しました');
+        showAlert('削除に失敗しました。');
       }
     });
   };
 
-  const handleEdit = (user: any) => {
-    setEditingId(user.id);
-    setFormData({ name: user.name, login_id: user.login_id, password: '', department: user.department || '', role: user.role });
-  };
-
-  const handleCsvImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const text = event.target?.result as string;
-      const rows = text.split('\n').map(row => row.split(','));
-      
-      try {
-        const res = await fetch('/api/users/import', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ csv_data: rows })
-        });
-        const data = await res.json();
-        if (data.status === 'success') {
-          fetchUsers();
-          showAlert('CSVからユーザーを登録しました');
-        } else {
-          showAlert(`エラーが発生しました:\n${data.error}`);
-        }
-      } catch (error) {
-        showAlert('CSVインポートに失敗しました');
-      }
-    };
-    reader.readAsText(file, 'Shift_JIS'); // Assuming Shift_JIS for Japanese Excel CSVs, or UTF-8. Let's try UTF-8 first or let browser decide. Actually, standard JS FileReader uses UTF-8 by default if not specified. Let's stick to UTF-8 or let user ensure UTF-8.
-    if (fileInputRef.current) fileInputRef.current.value = '';
+  const resetForm = () => {
+    setId(null);
+    setLoginId('');
+    setPassword('');
+    setName('');
+    setDepartment('');
+    setRole('一般');
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center p-4 border-b border-slate-200">
-          <h2 className="text-lg font-bold text-slate-800">ユーザー管理</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
-            <X size={24} />
-          </button>
-        </div>
-
-        <div className="p-4 overflow-y-auto flex-1">
-          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6">
-            <h3 className="font-bold text-slate-700 mb-3">{editingId ? 'ユーザー編集' : '新規ユーザー登録'}</h3>
-            <div className="grid grid-cols-5 gap-2 mb-3">
-              <input type="text" placeholder="氏名" className="border p-2 rounded text-sm" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-              <input type="text" placeholder="ログインID" className="border p-2 rounded text-sm" value={formData.login_id} onChange={e => setFormData({...formData, login_id: e.target.value})} />
-              <input type="password" placeholder={editingId ? "パスワード(変更時のみ)" : "パスワード"} className="border p-2 rounded text-sm" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
-              <input type="text" placeholder="部署" className="border p-2 rounded text-sm" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} />
-              <select className="border p-2 rounded text-sm" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-                <option value="一般">一般</option>
-                <option value="管理者">管理者</option>
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+        <h3 className="text-lg font-bold border-b pb-2 mb-4 text-purple-900">👑 システムユーザー管理 (管理者専用)</h3>
+        
+        <div className="bg-purple-50 p-4 rounded-lg mb-6 border border-purple-200">
+          <b className="block mb-3 text-sm text-purple-900">{id ? 'ユーザー情報の編集' : '新規ユーザー登録'}</b>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-xs font-bold mb-1 text-rose-600">ログインID (半角英数・記号)</label>
+              <input type="text" className="w-full border rounded p-1.5 text-sm" value={loginId} onChange={e => setLoginId(sanitizeAlphanumericAndSymbols(e.target.value))} />
+            </div>
+            <div>
+              <label className="block text-xs font-bold mb-1 text-rose-600">{id ? '新パスワード (変更時のみ)' : 'パスワード (必須)'}</label>
+              <input type="password" className="w-full border rounded p-1.5 text-sm" value={password} onChange={e => setPassword(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-xs font-bold mb-1 text-rose-600">氏名</label>
+              <input type="text" className="w-full border rounded p-1.5 text-sm" value={name} onChange={e => setName(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-xs font-bold mb-1 text-rose-600">所属部署</label>
+              <input type="text" className="w-full border rounded p-1.5 text-sm" value={department} onChange={e => setDepartment(e.target.value)} placeholder="例：設計1T" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold mb-1">権限</label>
+              <select className="w-full border rounded p-1.5 text-sm" value={role} onChange={e => setRole(e.target.value)}>
+                <option value="一般">一般 (自部署のみ管理)</option>
+                <option value="管理者">管理者 (全機能アクセス可)</option>
               </select>
             </div>
-            <div className="flex justify-between">
-              <button onClick={handleSave} className="flex items-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-bold">
-                {editingId ? <Save size={16} /> : <Plus size={16} />}
-                {editingId ? '更新' : '登録'}
-              </button>
-              {editingId && (
-                <button onClick={() => { setEditingId(null); setFormData({ name: '', login_id: '', password: '', department: '', role: '一般' }); }} className="px-4 py-2 bg-slate-400 text-white rounded hover:bg-slate-500 text-sm">
-                  キャンセル
-                </button>
-              )}
-            </div>
           </div>
-
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-bold text-slate-700">登録済みユーザー</h3>
-            <div>
-              <input type="file" accept=".csv" className="hidden" ref={fileInputRef} onChange={handleCsvImport} />
-              <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm">
-                <Upload size={16} /> CSV一括登録
-              </button>
-            </div>
+          <div className="flex gap-2">
+            <button onClick={handleSave} className={`px-4 py-1.5 rounded text-sm text-white font-bold ${id ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'}`}>
+              {id ? '💾 更新する' : '＋ 登録する'}
+            </button>
+            <button onClick={resetForm} className="bg-slate-500 text-white px-4 py-1.5 rounded text-sm hover:bg-slate-600 font-bold">クリア</button>
           </div>
+        </div>
 
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="bg-slate-100">
-                <th className="border p-2 text-left">氏名</th>
-                <th className="border p-2 text-left">ログインID</th>
-                <th className="border p-2 text-left">部署</th>
-                <th className="border p-2 text-left">権限</th>
-                <th className="border p-2 text-center w-24">操作</th>
+        <b className="block mb-2 text-sm">登録済みユーザー一覧</b>
+        <table className="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr className="bg-slate-100 border-b">
+              <th className="p-2 w-32">ログインID</th>
+              <th className="p-2 w-32">氏名</th>
+              <th className="p-2 w-32">所属部署</th>
+              <th className="p-2 w-24 text-center">権限</th>
+              <th className="p-2 w-32 text-center">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(u => (
+              <tr key={u.id} className="border-b hover:bg-slate-50">
+                <td className="p-2 font-mono text-xs">{u.login_id}</td>
+                <td className="p-2 font-bold">{u.name}</td>
+                <td className="p-2">{u.department}</td>
+                <td className="p-2 text-center">
+                  {u.role === '管理者' ? (
+                    <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-bold">管理者</span>
+                  ) : (
+                    <span className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded text-xs">一般</span>
+                  )}
+                </td>
+                <td className="p-2 text-center">
+                  <button onClick={() => handleEdit(u)} className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 font-bold mr-1">編集</button>
+                  {u.login_id !== 'admin' && (
+                    <button onClick={() => handleDelete(u.id)} className="bg-rose-600 text-white px-2 py-1 rounded text-xs hover:bg-rose-700 font-bold">削除</button>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {users.map(user => (
-                <tr key={user.id} className="hover:bg-slate-50">
-                  <td className="border p-2">{user.name}</td>
-                  <td className="border p-2">{user.login_id}</td>
-                  <td className="border p-2">{user.department}</td>
-                  <td className="border p-2">{user.role}</td>
-                  <td className="border p-2 text-center">
-                    <button onClick={() => handleEdit(user)} className="text-indigo-600 hover:text-indigo-800 mr-2">編集</button>
-                    <button onClick={() => handleDelete(user.id)} className="text-rose-600 hover:text-rose-800"><Trash2 size={16} /></button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            ))}
+            {users.length === 0 && (
+              <tr><td colSpan={5} className="p-4 text-center text-slate-500">ユーザー情報が取得できません。</td></tr>
+            )}
+          </tbody>
+        </table>
+
+        <div className="mt-6 text-right border-t pt-4">
+          <button onClick={onClose} className="bg-slate-500 text-white px-6 py-2 rounded text-sm hover:bg-slate-600 font-bold">閉じる</button>
         </div>
       </div>
     </div>
