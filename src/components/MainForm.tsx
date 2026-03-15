@@ -22,7 +22,6 @@ export default function MainForm({
   const { showAlert, showConfirm } = useDialog();
   const [workerCols, setWorkerCols] = useState(1);
 
-  // ★ 全角英数を半角に変換し、英数字と一部の記号（- _ . /）以外を消去する関数
   const sanitizeAlphanumeric = (str: string) => {
     if (!str) return '';
     let halfVal = str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
@@ -31,7 +30,6 @@ export default function MainForm({
     return halfVal.replace(/[^a-zA-Z0-9\-_./]/g, '');
   };
 
-  // ★ 半角英数に固定する対象の項目名（正規表現で各日時の項目にマッチさせる）
   const targetNames = [
     'job_no', 
     /^part_count_\d+$/, 
@@ -47,21 +45,17 @@ export default function MainForm({
       const checked = (e.target as HTMLInputElement).checked;
       setFormData((prev: any) => ({ ...prev, [name]: checked }));
     } else {
-      // 対象項目かどうかを判定し、対象なら入力された瞬間にサニタイズを実行
       let finalValue = value;
       const isTarget = targetNames.some(pattern => {
         if (typeof pattern === 'string') return name === pattern;
         return pattern.test(name);
       });
 
-      if (isTarget) {
-        finalValue = sanitizeAlphanumeric(value);
-      }
+      if (isTarget) finalValue = sanitizeAlphanumeric(value);
 
       setFormData((prev: any) => {
         const newData = { ...prev, [name]: finalValue };
         
-        // 閉鎖責任者の自動同期
         if (name.startsWith('start_') || name.startsWith('our_leader_')) {
           const dayMatch = name.match(/_(\d+)$/);
           if (dayMatch) {
@@ -89,6 +83,12 @@ export default function MainForm({
   const filteredTeams = teams.filter(t => {
     if (user.role === '管理者') return true; 
     return t.department === user.department; 
+  });
+
+  // ★ 名簿の絞り込み（自分の部署のもの、および未設定の旧データを表示）
+  const filteredPersonnel = personnel.filter(p => {
+    if (user.role === '管理者') return true;
+    return !p.department || p.department === user.department;
   });
 
   const handleTemplateSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -213,7 +213,6 @@ export default function MainForm({
         <tbody>
           <tr>
             <td className="bg-slate-100 p-2 border border-slate-300 w-[10%]">工番 (L12)</td>
-            {/* ★ inputMode="url" でスマホでも英数キーボードを開かせやすくする */}
             <td className="p-2 border border-slate-300 w-[12%]"><input type="text" name="job_no" inputMode="url" value={formData.job_no || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
             <td className="bg-slate-100 p-2 border border-slate-300 w-[8%]">チーム</td>
             <td className="p-2 border border-slate-300 w-[15%]">
@@ -340,7 +339,6 @@ export default function MainForm({
         </div>
       </div>
       <div className="overflow-x-auto mb-4 border border-slate-300">
-        {/* 全体の幅はデフォルト構成(1名)で 1000px になります */}
         <table className="w-max border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
@@ -362,7 +360,7 @@ export default function MainForm({
               const handleLeaderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
                 handleChange(e);
                 const val = e.target.value;
-                const p = personnel.find(x => x.name === val);
+                const p = filteredPersonnel.find(x => x.name === val);
                 if (p) {
                   setFormData((prev: any) => ({ ...prev, [`our_phone_${day}`]: p.phone }));
                 } else {
@@ -381,50 +379,50 @@ export default function MainForm({
                   <td className="p-2 border">
                     <select name={`our_leader_${day}`} value={formData[`our_leader_${day}`] || ''} onChange={handleLeaderChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
-                      {personnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                      {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>
                   <td className="p-2 border"><input type="text" name={`our_phone_${day}`} value={formData[`our_phone_${day}`] || ''} readOnly className="w-full border rounded p-1 bg-slate-100" /></td>
                   <td className="p-2 border">
                     <select name={`our_w1_${day}`} value={formData[`our_w1_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
-                      {personnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                      {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>
                   {workerCols >= 2 && <td className="p-2 border">
                     <select name={`our_w2_${day}`} value={formData[`our_w2_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
-                      {personnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                      {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>}
                   {workerCols >= 3 && <td className="p-2 border">
                     <select name={`our_w3_${day}`} value={formData[`our_w3_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
-                      {personnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                      {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>}
                   {workerCols >= 4 && <td className="p-2 border">
                     <select name={`our_w4_${day}`} value={formData[`our_w4_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
-                      {personnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                      {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>}
                   <td className="p-2 border">
                     <select name={`our_cl_${day}`} value={formData[`our_cl_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
-                      {personnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                      {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>
                   <td className="p-2 border">
                     <select name={`our_g1_${day}`} value={formData[`our_g1_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
-                      {personnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                      {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>
                   <td className="p-2 border">
                     <select name={`our_g2_${day}`} value={formData[`our_g2_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
-                      {personnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                      {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>
                   <td className="p-2 border text-center">
@@ -446,7 +444,6 @@ export default function MainForm({
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border w-[80px]">コピー</th>
-              {/* ★ 業者名の幅を広げ、全体の幅を 1000px に揃える */}
               <th className="p-2 border w-[320px]">協力業者 業者名</th>
               <th className="p-2 border w-[140px]">協力業者 責任者</th>
               <th className="p-2 border w-[140px]">携帯番号</th>
@@ -459,14 +456,14 @@ export default function MainForm({
           </thead>
           <tbody>
             {days.map(day => {
-              const companies = Array.from(new Set(personnel.filter(p => p.type === 'partner').map(p => p.company)));
+              const companies = Array.from(new Set(filteredPersonnel.filter(p => p.type === 'partner').map(p => p.company)));
               const currentCompany = formData[`part_name_${day}`];
-              const leaders = personnel.filter(p => p.type === 'partner' && p.company === currentCompany);
+              const leaders = filteredPersonnel.filter(p => p.type === 'partner' && p.company === currentCompany);
 
               const handleLeaderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
                 handleChange(e);
                 const val = e.target.value;
-                const p = personnel.find(x => x.name === val);
+                const p = filteredPersonnel.find(x => x.name === val);
                 if (p) {
                   setFormData((prev: any) => ({ ...prev, [`part_phone_${day}`]: p.phone }));
                 } else {
@@ -485,7 +482,7 @@ export default function MainForm({
                   <td className="p-2 border">
                     <select name={`part_name_${day}`} value={formData[`part_name_${day}`] || ''} onChange={(e) => { handleChange(e); setFormData((prev: any) => ({ ...prev, [`part_leader_${day}`]: '', [`part_phone_${day}`]: '' })); }} className="w-full border rounded p-1">
                       <option value="">選択</option>
-                      {companies.map((c, i) => <option key={i} value={c}>{c}</option>)}
+                      {companies.map((c, i) => <option key={i} value={c as string}>{c as string}</option>)}
                     </select>
                   </td>
                   <td className="p-2 border">
@@ -519,7 +516,6 @@ export default function MainForm({
             <tr className="bg-slate-100">
               <th className="p-2 border w-[80px]">コピー</th>
               <th className="p-2 border w-[100px]">人数 (C列)</th>
-              {/* ★ 所属部署の幅を広げ、全体の幅を 1000px に揃える */}
               <th className="p-2 border w-[740px]">所属部署・氏名 (D列)</th>
               <th className="p-2 border w-[80px]">操作</th>
             </tr>
