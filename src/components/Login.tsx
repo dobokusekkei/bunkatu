@@ -10,23 +10,41 @@ export default function Login({ onLogin }: LoginProps) {
   const [password, setPassword] = useState('');
   const { showAlert } = useDialog();
 
+  const isVercel = import.meta.env.VITE_IS_VERCEL === 'true';
+
+  // ★ 全角英数を半角に変換し、英数字と一部記号（- _ .）以外を弾く関数
+  const sanitizeAlphanumeric = (str: string) => {
+    if (!str) return '';
+    let halfVal = str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
+      return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+    });
+    return halfVal.replace(/[^a-zA-Z0-9\-_.]/g, '');
+  };
+
+  const handleLoginIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // 入力された瞬間にサニタイズしてStateにセットする
+    setLoginId(sanitizeAlphanumeric(e.target.value));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ★ Vercelテスト用バイパス（admin / admin で強制ログイン）
-    // APIサーバーが存在しない環境でもUIのテストができるように直結させます
-    if (loginId === 'admin' && password === 'admin') {
-      onLogin({ 
-        id: 1, 
-        name: 'テスト管理者 (Vercel)', 
-        department: 'システム管理部', 
-        role: '管理者',
-        login_id: 'admin'
-      });
-      return;
+    if (isVercel) {
+      if (loginId === 'admin' && password === 'admin') {
+        onLogin({ 
+          id: 1, 
+          name: 'テスト管理者 (Vercel)', 
+          department: 'システム管理部', 
+          role: '管理者',
+          login_id: 'admin'
+        });
+        return;
+      } else {
+        showAlert('Vercelテスト環境では ID: admin / PASS: admin を入力してください');
+        return;
+      }
     }
 
-    // 本来のAPI通信（社内サーバー用）
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -40,8 +58,7 @@ export default function Login({ onLogin }: LoginProps) {
         showAlert(data.error || 'ログインに失敗しました');
       }
     } catch (error) {
-      // APIサーバーに繋がらない場合はVercel等のテスト環境とみなし、アラートで案内します
-      showAlert('サーバーエラーが発生しました（Vercelテスト環境では ID: admin / PASS: admin を入力してください）');
+      showAlert('サーバーエラーが発生しました');
     }
   };
 
@@ -50,18 +67,20 @@ export default function Login({ onLogin }: LoginProps) {
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md border border-slate-200">
         <h2 className="text-2xl font-bold text-center text-indigo-900 mb-6">安全作業計画書システム</h2>
         
-        {/* テスト環境であることがすぐわかるように案内を表示 */}
-        <div className="bg-amber-100 text-amber-800 text-xs p-3 rounded mb-4 font-bold text-center border border-amber-200">
-          Vercelテスト用: ID「admin」 / PASS「admin」
-        </div>
+        {isVercel && (
+          <div className="bg-amber-100 text-amber-800 text-xs p-3 rounded mb-4 font-bold text-center border border-amber-200">
+            Vercelテスト用: ID「admin」 / PASS「admin」
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">ログインID</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">ログインID (半角英数)</label>
             <input
               type="text"
+              inputMode="url"
               value={loginId}
-              onChange={(e) => setLoginId(e.target.value)}
+              onChange={handleLoginIdChange}
               className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             />
