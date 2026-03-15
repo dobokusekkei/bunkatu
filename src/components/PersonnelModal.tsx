@@ -5,7 +5,6 @@ export default function PersonnelModal({ onClose, user, fetchData }: { onClose: 
   const { showAlert, showConfirm } = useDialog();
   const [personnel, setPersonnel] = useState<any[]>([]);
   
-  // フォーム用State
   const [id, setId] = useState<number | null>(null);
   const [personnelDept, setPersonnelDept] = useState(user.role === '管理者' ? '' : user.department);
   const [type, setType] = useState('our');
@@ -13,7 +12,6 @@ export default function PersonnelModal({ onClose, user, fetchData }: { onClose: 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
 
-  // 絞り込み用
   const [filterDept, setFilterDept] = useState(user.role === '管理者' ? '' : user.department);
 
   const fetchPersonnel = async () => {
@@ -54,7 +52,7 @@ export default function PersonnelModal({ onClose, user, fetchData }: { onClose: 
       }
       resetForm();
       fetchPersonnel();
-      fetchData(); // メイン画面のプルダウンも更新
+      fetchData(); 
     } catch (error) {
       console.error(error);
       showAlert('保存に失敗しました。');
@@ -110,7 +108,7 @@ export default function PersonnelModal({ onClose, user, fetchData }: { onClose: 
         company: r[1].trim(),
         name: r[2].trim(),
         phone: r[3].trim(),
-        department: targetDept // 部署を付与
+        department: targetDept 
       }));
 
       try {
