@@ -10,16 +10,23 @@ export default function Login({ onLogin }: LoginProps) {
   const [password, setPassword] = useState('');
   const { showAlert } = useDialog();
 
-  const sanitizeAlphanumericAndSymbols = (str: string) => {
+  // ★ 入力中の変換用（全角英数と各種ハイフンを半角に。ここでは削除しない）
+  const toHalfWidth = (str: string) => {
     if (!str) return '';
     let halfVal = str.replace(/[！-～]/g, function(s) {
       return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
     });
-    return halfVal.replace(/[^\x20-\x7E]/g, '');
+    // 全角のハイフン、マイナス、長音記号などを半角ハイフンに変換
+    return halfVal.replace(/[ー－―−]/g, '-');
   };
 
   const handleLoginIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLoginId(sanitizeAlphanumericAndSymbols(e.target.value));
+    setLoginId(toHalfWidth(e.target.value));
+  };
+
+  // ★ 入力完了（フォーカスが外れた）時に、半角英数・記号以外を完全削除して浄化
+  const handleLoginIdBlur = () => {
+    setLoginId(prev => prev.replace(/[^\x20-\x7E]/g, ''));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,6 +62,7 @@ export default function Login({ onLogin }: LoginProps) {
               inputMode="url"
               value={loginId}
               onChange={handleLoginIdChange}
+              onBlur={handleLoginIdBlur}
               className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             />
