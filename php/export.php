@@ -4,9 +4,10 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 ini_set('memory_limit', '1024M'); 
 
-$autoload_path = realpath(__DIR__ . '/vendor/autoload.php');
+// ★ 指示通り、Composerのautoloadは1つ上の階層を指定
+$autoload_path = realpath(__DIR__ . '/../vendor/autoload.php');
 if (!$autoload_path || !file_exists($autoload_path)) {
-    die(json_encode(['status' => 'error', 'message' => "システムエラー: vendor/autoload.php が見つかりません。Composerでインストールしてください。"]));
+    die(json_encode(['status' => 'error', 'message' => "システムエラー: vendor/autoload.php が見つかりません。"]));
 }
 require $autoload_path;
 
@@ -20,7 +21,6 @@ use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
-// 祝日リスト
 $holidays = [
     '2026-01-01', '2026-01-12', '2026-02-11', '2026-02-23', '2026-03-20',
     '2026-04-29', '2026-05-03', '2026-05-04', '2026-05-05', '2026-05-06',
@@ -41,6 +41,9 @@ $req = json_decode($input, true) ?? [];
 $action = $req['action'] ?? '';
 $postData = $req['data'] ?? [];
 
+// ==========================================
+// 外業管理表のExcel出力処理
+// ==========================================
 if ($action === 'export_gaigyo') {
     try {
         $spreadsheet = new Spreadsheet();
@@ -129,11 +132,15 @@ if ($action === 'export_gaigyo') {
     }
 }
 
+// ==========================================
+// 安全作業計画書 Excel生成処理
+// ==========================================
 if ($action === 'export_plan') {
     $spreadsheet = null;
     try {
-        $templatePath = __DIR__ . '/templates/template.xlsx';
-        if (!file_exists($templatePath)) throw new Exception("テンプレートファイルが見つかりません。templatesフォルダを確認してください。");
+        // ★ 指示通り、templateフォルダ内を参照
+        $templatePath = __DIR__ . '/template/template.xlsx';
+        if (!file_exists($templatePath)) throw new Exception("テンプレートファイルが見つかりません。templateフォルダを確認してください。");
 
         $dbFile = __DIR__ . '/data/anzen_db.sqlite';
         $pdo = new PDO('sqlite:' . $dbFile);
@@ -152,7 +159,7 @@ if ($action === 'export_plan') {
         $sheet->setCellValue('K54', $postData['danger_other_text'] ?? '');
 
         if (!empty($postData['dangers'])) {
-            $ellipsePath = __DIR__ . '/templates/circle.png';
+            $ellipsePath = __DIR__ . '/template/circle.png';
             if (file_exists($ellipsePath)) {
                 $dangerMap = ['触車' => 'B54', '感電' => 'D54', '墜落' => 'G54', 'その他' => 'I54'];
                 foreach ($postData['dangers'] as $danger) {
@@ -318,7 +325,7 @@ if ($action === 'export_plan') {
                             }
                         }
 
-                        $barPath = __DIR__ . '/templates/bar600.png';
+                        $barPath = __DIR__ . '/template/bar600.png';
                         if (file_exists($barPath)) {
                             if (empty($postData["chk_kido_{$i}"])) {
                                 $draw = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
@@ -372,7 +379,7 @@ if ($action === 'export_plan') {
 
                     $sheetChecklist = $spreadsheet->getSheetByName("checklist{$i}d");
                     if ($sheetChecklist !== null) {
-                        $bar400Path = __DIR__ . '/templates/bar400.png';
+                        $bar400Path = __DIR__ . '/template/bar400.png';
                         if (file_exists($bar400Path)) {
                             $offsetX_bar400 = 0; $offsetY_bar400 = 10;
                             $is_shokusha = !empty($postData['dangers']) && in_array('触車', $postData['dangers']);
