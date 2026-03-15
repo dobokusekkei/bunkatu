@@ -276,7 +276,6 @@ export default function MainForm({
           {formData.yorudatsu_csv_data && <span className="text-emerald-600 font-bold ml-2">✅ 読込済</span>}
         </div>
       </div>
-      {/* ★ 1050pxで固定し、はみ出た場合は水平スクロール */}
       <div className="w-[1050px] overflow-x-auto mb-4 border border-slate-300">
         <table className="w-max border-collapse bg-white text-sm text-center">
           <thead>
@@ -340,7 +339,6 @@ export default function MainForm({
           {workerCols > 1 && <button type="button" onClick={() => setWorkerCols(prev => prev - 1)} className="bg-rose-500 text-white px-2 py-1 rounded text-xs font-bold">－ 枠を減らす</button>}
         </div>
       </div>
-      {/* ★ 親divは1050pxで固定し、枠が増えたら水平スクロールを出す */}
       <div className="w-[1050px] overflow-x-auto mb-4 border border-slate-300">
         <table className="w-max border-collapse bg-white text-sm text-center">
           <thead>
