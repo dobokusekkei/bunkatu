@@ -33,9 +33,6 @@ export default function App() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
 
-  const [loadedTitle, setLoadedTitle] = useState('');
-  const prevJobNoRef = useRef('');
-
   const isVercel = import.meta.env.VITE_IS_VERCEL === 'true';
 
   useEffect(() => {
@@ -206,9 +203,10 @@ export default function App() {
 
   return (
     <>
-      {/* ★ 印刷時（Ctrl+P）はこのメイン画面全体を非表示にする (print:hidden) */}
       <div className="min-h-screen bg-slate-50 p-4 font-sans text-sm print:hidden">
-        <div className="max-w-7xl mx-auto">
+        {/* ★ 全体の枠を 1050px に完全固定 */}
+        <div className="w-[1050px] mx-auto">
+          
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4">
             <div className="flex justify-between items-center border-b-2 border-indigo-900 pb-2 mb-4">
               <h2 className="text-xl font-bold text-indigo-900">安全作業計画書 入力・DB管理システム</h2>
@@ -277,7 +275,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* ★ 各種モーダル（GaigyoModalだけは印刷時に表示される仕組みを持っている） */}
       {isPersonnelModalOpen && <PersonnelModal onClose={() => setIsPersonnelModalOpen(false)} user={user} fetchData={fetchData} />}
       {isTemplateModalOpen && <TemplateModal onClose={() => setIsTemplateModalOpen(false)} />}
       {isTeamModalOpen && <TeamModal onClose={() => setIsTeamModalOpen(false)} user={user} fetchData={fetchData} />}
