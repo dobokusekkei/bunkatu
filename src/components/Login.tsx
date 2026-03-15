@@ -12,18 +12,19 @@ export default function Login({ onLogin }: LoginProps) {
 
   const isVercel = import.meta.env.VITE_IS_VERCEL === 'true';
 
-  // ★ 全角英数を半角に変換し、英数字と一部記号（- _ .）以外を弾く関数
-  const sanitizeAlphanumeric = (str: string) => {
+  // ★ 全角英数・記号を半角に変換し、半角英数と「すべての半角記号」以外を弾く関数
+  const sanitizeAlphanumericAndSymbols = (str: string) => {
     if (!str) return '';
-    let halfVal = str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
+    // 全角の英数字と記号（！〜～）を半角に変換
+    let halfVal = str.replace(/[！-～]/g, function(s) {
       return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
     });
-    return halfVal.replace(/[^a-zA-Z0-9\-_.]/g, '');
+    // 半角の英数とすべての記号 (ASCIIコードの 0x20 ～ 0x7E) のみを許可。日本語などは消去
+    return halfVal.replace(/[^\x20-\x7E]/g, '');
   };
 
   const handleLoginIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // 入力された瞬間にサニタイズしてStateにセットする
-    setLoginId(sanitizeAlphanumeric(e.target.value));
+    setLoginId(sanitizeAlphanumericAndSymbols(e.target.value));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,7 +76,7 @@ export default function Login({ onLogin }: LoginProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">ログインID (半角英数)</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">ログインID (半角英数・記号)</label>
             <input
               type="text"
               inputMode="url"
