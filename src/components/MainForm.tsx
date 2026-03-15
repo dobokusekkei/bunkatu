@@ -22,7 +22,6 @@ export default function MainForm({
   const { showAlert, showConfirm } = useDialog();
   const [workerCols, setWorkerCols] = useState(1);
 
-  // ★ 全角英数・記号を半角に変換し、すべての半角記号の入力を許可する
   const sanitizeAlphanumericAndSymbols = (str: string) => {
     if (!str) return '';
     let halfVal = str.replace(/[！-～]/g, function(s) {
@@ -204,12 +203,12 @@ export default function MainForm({
   const days = [1, 2, 3, 4, 5];
 
   return (
-    <div className="max-w-full mx-auto overflow-x-auto pb-8">
+    <div className="max-w-[1050px] mx-auto pb-8">
       {/* 1. 基本情報 */}
-      <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 flex justify-between items-center" style={{ width: '1000px', minWidth: '1000px' }}>
+      <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 flex justify-between items-center w-[1050px]">
         1. 基本情報
       </div>
-      <table className="border-collapse border border-slate-300 bg-white text-sm mb-4" style={{ width: '1000px', minWidth: '1000px' }}>
+      <table className="border-collapse border border-slate-300 bg-white text-sm mb-4 w-[1050px]">
         <tbody>
           <tr>
             <td className="bg-slate-100 p-2 border border-slate-300 w-[12%]">工番 (L12)</td>
@@ -238,10 +237,10 @@ export default function MainForm({
       </table>
 
       {/* 2. 予測される危険 ＆ 安全対策 */}
-      <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 flex justify-between items-center" style={{ width: '1000px', minWidth: '1000px' }}>
+      <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 flex justify-between items-center w-[1050px]">
         2. 予測される危険 ＆ 安全対策
       </div>
-      <div className="p-4 border border-slate-300 bg-white mb-4" style={{ width: '1000px', minWidth: '1000px' }}>
+      <div className="p-4 border border-slate-300 bg-white mb-4 w-[1050px]">
         <div className="mb-4 flex flex-wrap gap-4 items-center min-h-[40px]">
           <span className="font-bold">予測される危険 (該当箇所に赤丸を描画します):</span>
           <label className="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="dangers" value="触車" checked={formData.dangers?.includes('触車') || false} onChange={handleDangerChange} /> 触車</label>
@@ -268,7 +267,7 @@ export default function MainForm({
       </div>
 
       {/* 3. 作業日時 */}
-      <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 flex items-center gap-4" style={{ width: '1000px', minWidth: '1000px' }}>
+      <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 flex items-center gap-4 w-[1050px]">
         3. 作業日時
         <div className="text-xs font-normal flex items-center bg-white text-slate-800 px-2 py-1 rounded">
           <span className="bg-amber-400 text-slate-900 px-1 rounded mr-2 font-bold">自動転記</span>
@@ -277,14 +276,15 @@ export default function MainForm({
           {formData.yorudatsu_csv_data && <span className="text-emerald-600 font-bold ml-2">✅ 読込済</span>}
         </div>
       </div>
-      <div className="overflow-x-auto mb-4 border border-slate-300 w-max">
-        <table className="border-collapse bg-white text-sm text-center">
+      {/* ★ 1050pxで固定し、はみ出た場合は水平スクロール */}
+      <div className="w-[1050px] overflow-x-auto mb-4 border border-slate-300">
+        <table className="w-max border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>コピー</th>
               <th className="p-2 border" style={{ width: '215px', minWidth: '215px' }}>作業日時</th>
-              <th className="p-2 border" style={{ width: '280px', minWidth: '280px' }}>時間入力</th>
-              <th className="p-2 border" style={{ width: '345px', minWidth: '345px' }}>手配・立会確認</th>
+              <th className="p-2 border" style={{ width: '300px', minWidth: '300px' }}>時間入力</th>
+              <th className="p-2 border" style={{ width: '375px', minWidth: '375px' }}>手配・立会確認</th>
               <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>操作</th>
             </tr>
           </thead>
@@ -304,7 +304,7 @@ export default function MainForm({
                   </div>
                 </td>
                 <td className="p-2 border">
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-center gap-1">
                     <button type="button" onClick={() => setTime('09:00', '17:00', day)} className="bg-amber-400 px-2 py-1 rounded text-xs font-bold">昼</button>
                     <button type="button" onClick={() => setTime('00:00', '05:00', day)} className="bg-slate-600 text-white px-2 py-1 rounded text-xs font-bold">夜</button>
                     <input type="time" name={`start_${day}`} value={formData[`start_${day}`] || ''} onChange={handleChange} className="border rounded p-1 w-[90px]" />
@@ -313,7 +313,7 @@ export default function MainForm({
                   </div>
                 </td>
                 <td className="p-2 border text-left">
-                  <div className="flex flex-wrap gap-2 w-full">
+                  <div className="flex flex-wrap gap-2 w-full justify-center">
                     <label className="text-xs cursor-pointer w-[75px]"><input type="checkbox" name={`chk_kido_${day}`} checked={formData[`chk_kido_${day}`] || false} onChange={handleChange} /> 軌道立会</label>
                     <label className="text-xs cursor-pointer w-[75px]"><input type="checkbox" name={`chk_denki_${day}`} checked={formData[`chk_denki_${day}`] || false} onChange={handleChange} /> 電気立会</label>
                     <label className="text-xs cursor-pointer w-[60px]"><input type="checkbox" name={`chk_teiden_${day}`} checked={formData[`chk_teiden_${day}`] || false} onChange={handleChange} /> 停電</label>
@@ -333,27 +333,28 @@ export default function MainForm({
       </div>
 
       {/* 4. 当社体制 */}
-      <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 flex justify-between items-center" style={{ width: '1000px', minWidth: '1000px' }}>
+      <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 flex justify-between items-center w-[1050px]">
         4. 当社体制
         <div>
           {workerCols < 4 && <button type="button" onClick={() => setWorkerCols(prev => prev + 1)} className="bg-amber-400 text-slate-900 px-2 py-1 rounded text-xs font-bold mr-2">＋ 作業員を追加表示</button>}
           {workerCols > 1 && <button type="button" onClick={() => setWorkerCols(prev => prev - 1)} className="bg-rose-500 text-white px-2 py-1 rounded text-xs font-bold">－ 枠を減らす</button>}
         </div>
       </div>
-      <div className="overflow-x-auto mb-4 border border-slate-300 w-max">
-        <table className="border-collapse bg-white text-sm text-center">
+      {/* ★ 親divは1050pxで固定し、枠が増えたら水平スクロールを出す */}
+      <div className="w-[1050px] overflow-x-auto mb-4 border border-slate-300">
+        <table className="w-max border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>コピー</th>
-              <th className="p-2 border" style={{ width: '140px', minWidth: '140px' }}>当社 指揮者</th>
-              <th className="p-2 border" style={{ width: '140px', minWidth: '140px' }}>携帯番号</th>
-              <th className="p-2 border" style={{ width: '140px', minWidth: '140px' }}>作業員1</th>
-              {workerCols >= 2 && <th className="p-2 border" style={{ width: '140px', minWidth: '140px' }}>作業員2</th>}
-              {workerCols >= 3 && <th className="p-2 border" style={{ width: '140px', minWidth: '140px' }}>作業員3</th>}
-              {workerCols >= 4 && <th className="p-2 border" style={{ width: '140px', minWidth: '140px' }}>作業員4</th>}
-              <th className="p-2 border" style={{ width: '140px', minWidth: '140px' }}>閉鎖責任者</th>
-              <th className="p-2 border" style={{ width: '140px', minWidth: '140px' }}>監視員1</th>
-              <th className="p-2 border" style={{ width: '140px', minWidth: '140px' }}>監視員2</th>
+              <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>当社 指揮者</th>
+              <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>携帯番号</th>
+              <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>作業員1</th>
+              {workerCols >= 2 && <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>作業員2</th>}
+              {workerCols >= 3 && <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>作業員3</th>}
+              {workerCols >= 4 && <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>作業員4</th>}
+              <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>閉鎖責任者</th>
+              <th className="p-2 border" style={{ width: '145px', minWidth: '145px' }}>監視員1</th>
+              <th className="p-2 border" style={{ width: '145px', minWidth: '145px' }}>監視員2</th>
               <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>操作</th>
             </tr>
           </thead>
@@ -438,17 +439,17 @@ export default function MainForm({
       </div>
 
       {/* 5. 協力業者 */}
-      <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2" style={{ width: '1000px', minWidth: '1000px' }}>
+      <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 w-[1050px]">
         5. 協力業者
       </div>
-      <div className="overflow-x-auto mb-4 border border-slate-300 w-max">
-        <table className="border-collapse bg-white text-sm text-center">
+      <div className="w-[1050px] overflow-x-auto mb-4 border border-slate-300">
+        <table className="w-max border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>コピー</th>
-              <th className="p-2 border" style={{ width: '320px', minWidth: '320px' }}>協力業者 業者名</th>
-              <th className="p-2 border" style={{ width: '140px', minWidth: '140px' }}>協力業者 責任者</th>
-              <th className="p-2 border" style={{ width: '140px', minWidth: '140px' }}>携帯番号</th>
+              <th className="p-2 border" style={{ width: '350px', minWidth: '350px' }}>協力業者 業者名</th>
+              <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>協力業者 責任者</th>
+              <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>携帯番号</th>
               <th className="p-2 border" style={{ width: '60px', minWidth: '60px' }}>従事者</th>
               <th className="p-2 border" style={{ width: '60px', minWidth: '60px' }}>監視員</th>
               <th className="p-2 border" style={{ width: '60px', minWidth: '60px' }}>誘導員</th>
@@ -509,16 +510,16 @@ export default function MainForm({
       </div>
 
       {/* 6. 発注者立会人 */}
-      <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2" style={{ width: '1000px', minWidth: '1000px' }}>
+      <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 w-[1050px]">
         6. 発注者立会人
       </div>
-      <div className="overflow-x-auto mb-4 border border-slate-300 w-max">
-        <table className="border-collapse bg-white text-sm text-center">
+      <div className="w-[1050px] overflow-x-auto mb-4 border border-slate-300">
+        <table className="w-max border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>コピー</th>
               <th className="p-2 border" style={{ width: '100px', minWidth: '100px' }}>人数 (C列)</th>
-              <th className="p-2 border" style={{ width: '740px', minWidth: '740px' }}>所属部署・氏名 (D列)</th>
+              <th className="p-2 border" style={{ width: '790px', minWidth: '790px' }}>所属部署・氏名 (D列)</th>
               <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>操作</th>
             </tr>
           </thead>
