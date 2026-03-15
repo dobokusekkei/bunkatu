@@ -35,6 +35,9 @@ export default function App() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
 
+  const [loadedTitle, setLoadedTitle] = useState('');
+  const prevJobNoRef = useRef('');
+
   // Vercelテスト環境かどうかの判定フラグ
   const isVercel = import.meta.env.VITE_IS_VERCEL === 'true';
 
@@ -110,7 +113,6 @@ export default function App() {
   // 保存処理（タイトルの自動生成・上書き判定）
   // ==========================================
   const handleSave = async () => {
-    // 保存直前に「工番」と「工事内容」を合体させてタイトルを自動生成
     const job = formData.job_no || '';
     const content = formData.job_content || '';
     let autoTitle = `${job}_${content}`.trim();
@@ -123,7 +125,6 @@ export default function App() {
       return;
     }
 
-    // 現在画面に入力されている1日目〜5日目の日付を取得
     const currentDates = ['', '', '', '', ''];
     for (let i = 1; i <= 5; i++) {
       currentDates[i-1] = formData[`date_${i}`] || '';
@@ -140,7 +141,7 @@ export default function App() {
         const data = await res.json();
         if (res.ok && data.status === 'success') {
           setLoadedPlanId(data.id);
-          setLoadedDates(currentDates); // 保存成功時に現在の日付を記憶
+          setLoadedDates(currentDates); 
           fetchData();
           showAlert('データベースに保存しました。');
         } else {
@@ -151,14 +152,12 @@ export default function App() {
       }
     };
 
-    // 読み込んだデータであり、かつ「作業日時」が変更されていない場合のみ上書き確認
     if (loadedPlanId && JSON.stringify(loadedDates) === JSON.stringify(currentDates)) {
       showConfirm("⚠️ 日付が変更されていないため、既存のデータを「上書き保存」します。\nよろしいですか？\n(キャンセルを押すと新規データとして保存します)", 
         () => performSave(true), 
         () => performSave(false)
       );
     } else {
-      // 新規、または日付が変わっている場合は自動的に新規保存
       performSave(false);
     }
   };
@@ -174,7 +173,6 @@ export default function App() {
         const parsed = JSON.parse(plan.form_data);
         setFormData(parsed); 
         
-        // 読み込んだ時点の日付を記憶（上書き判定用）
         const tempDates = ['', '', '', '', ''];
         for (let i = 1; i <= 5; i++) {
           tempDates[i-1] = parsed[`date_${i}`] || '';
@@ -216,9 +214,6 @@ export default function App() {
     }
   };
 
-  // ----------------------------------------------------
-  // レンダリング
-  // ----------------------------------------------------
   if (isAuthChecking) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
   if (!user) return <Login onLogin={setUser} />;
@@ -242,7 +237,6 @@ export default function App() {
             
             <div className="w-px h-6 bg-slate-300 mx-1"></div>
             
-            {/* DB保存名入力欄を削除し、保存ボタンだけを配置 */}
             <button onClick={handleSave} className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 font-medium text-xs">
               <Save size={16} /> DBに保存
             </button>
@@ -279,10 +273,10 @@ export default function App() {
             personnel={personnel} 
             templates={templates} 
             teams={teams} 
-            setIsTemplateModalOpen={setIsTemplateModalOpen} 
+            setIsTemplateModalOpen={setIsTemplateModalOpen}
+            user={user} 
           />
           
-          {/* ★ Excel色の文字幅に合わせたボタンに変更 */}
           <div className="mt-8 pt-6 border-t border-slate-200 flex justify-center">
             <button 
               onClick={handleExportPlan} 
@@ -294,16 +288,17 @@ export default function App() {
         </div>
       </div>
 
-      {/* 各種モーダル */}
       {isPersonnelModalOpen && <PersonnelModal onClose={() => setIsPersonnelModalOpen(false)} />}
       {isTemplateModalOpen && <TemplateModal onClose={() => setIsTemplateModalOpen(false)} />}
-      {isTeamModalOpen && <TeamModal onClose={() => setIsTeamModalOpen(false)} />}
+      
+      {/* ★ チーム管理モーダルに user と fetchData を渡す */}
+      {isTeamModalOpen && <TeamModal onClose={() => setIsTeamModalOpen(false)} user={user} fetchData={fetchData} />}
+      
       {isPlanListModalOpen && (
         <PlanListModal 
           onClose={() => setIsPlanListModalOpen(false)} 
           onSelect={(id) => { 
             setLoadedPlanId(id); 
-            // setLoadedPlanIdが反映された直後にデータを読み込むためのトリガー
             setTimeout(() => document.getElementById('trigger-load')?.click(), 0); 
           }} 
           plans={plans} 
@@ -315,7 +310,6 @@ export default function App() {
       {isUserManagementModalOpen && <UserManagementModal onClose={() => setIsUserManagementModalOpen(false)} />}
       {isManualModalOpen && <ManualModal onClose={() => setIsManualModalOpen(false)} />}
       
-      {/* useEffectの代わりに使用する見えない読込トリガーボタン */}
       <button id="trigger-load" className="hidden" onClick={handleLoadPlan}></button>
     </div>
   );
