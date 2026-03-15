@@ -33,7 +33,6 @@ export default function App() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
 
-  // PHP APIと通信するための共通ヘルパー
   const fetchApi = async (action: string, payload: any = {}) => {
     try {
       const res = await fetch('api.php', {
@@ -181,8 +180,8 @@ export default function App() {
 
   return (
     <>
-      <div className="min-h-screen bg-slate-50 p-4 font-sans text-sm print:hidden">
-        <div className="w-[1050px] mx-auto">
+      <div className="min-h-screen bg-slate-50 p-4 font-sans text-sm print:hidden overflow-x-auto">
+        <div className="w-[1100px] mx-auto">
           
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4">
             <div className="flex justify-between items-center border-b-2 border-indigo-900 pb-2 mb-4">
