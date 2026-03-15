@@ -208,30 +208,32 @@ export default function MainForm({
       <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 flex justify-between items-center w-[1050px]">
         1. 基本情報
       </div>
+      {/* ★ 入力枠を半分にし、左寄せ・右余白の5列構成に変更 */}
       <table className="border-collapse border border-slate-300 bg-white text-sm mb-4 w-[1050px]">
         <tbody>
           <tr>
-            <td className="bg-slate-100 p-2 border border-slate-300 w-[12%]">工番 (L12)</td>
-            <td className="p-2 border border-slate-300 w-[38%]"><input type="text" name="job_no" inputMode="url" value={formData.job_no || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-            <td className="bg-slate-100 p-2 border border-slate-300 w-[12%]">チーム</td>
-            <td className="p-2 border border-slate-300 w-[38%]">
+            <td className="bg-slate-100 p-2 border border-slate-300 w-[120px]">工番 (L12)</td>
+            <td className="p-2 border border-slate-300 w-[200px]"><input type="text" name="job_no" inputMode="url" value={formData.job_no || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+            <td className="bg-slate-100 p-2 border border-slate-300 w-[100px]">チーム</td>
+            <td className="p-2 border border-slate-300 w-[200px]">
               <select name="team_id" value={formData.team_id || ''} onChange={handleChange} className="w-full border rounded p-1">
                 <option value="">選択</option>
                 {filteredTeams.map(t => <option key={t.id} value={t.id}>{t.team_name}</option>)}
               </select>
             </td>
+            <td className="p-2 border border-slate-300 bg-slate-50 w-[430px]"></td> {/* 右側の余白エリア */}
           </tr>
           <tr>
             <td className="bg-slate-100 p-2 border border-slate-300">工事内容 (B12)</td>
-            <td colSpan={3} className="p-2 border border-slate-300"><input type="text" name="job_content" value={formData.job_content || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+            <td colSpan={4} className="p-2 border border-slate-300"><input type="text" name="job_content" value={formData.job_content || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
           </tr>
           <tr>
             <td className="bg-slate-100 p-2 border border-slate-300">作業場所 (B13)</td>
-            <td colSpan={3} className="p-2 border border-slate-300"><input type="text" name="location" value={formData.location || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+            <td colSpan={4} className="p-2 border border-slate-300"><input type="text" name="location" value={formData.location || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
           </tr>
           <tr>
             <td className="bg-slate-100 p-2 border border-slate-300 align-top">作業内容 (B35)</td>
-            <td colSpan={3} className="p-2 border border-slate-300"><textarea name="work_detail" value={formData.work_detail || ''} onChange={handleChange} rows={6} className="w-full border rounded p-1"></textarea></td>
+            <td colSpan={4} className="p-2 border border-slate-300"><textarea name="work_detail" value={formData.work_detail || ''} onChange={handleChange} rows={6} className="w-full border rounded p-1"></textarea></td>
           </tr>
         </tbody>
       </table>
@@ -277,7 +279,8 @@ export default function MainForm({
         </div>
       </div>
       <div className="w-[1050px] mb-4">
-        <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
+        {/* ★ table タグ自体に border border-slate-300 を追加して右線の切れを防止 */}
+        <table className="w-full table-fixed border-collapse border border-slate-300 bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border border-slate-300" style={{ width: '80px' }}>コピー</th>
@@ -339,10 +342,11 @@ export default function MainForm({
           {workerCols > 1 && <button type="button" onClick={() => setWorkerCols(prev => prev - 1)} className="bg-rose-500 text-white px-2 py-1 rounded text-xs font-bold">－ 枠を減らす</button>}
         </div>
       </div>
-      {/* ★ workerCols が 1 の時はスクロールバーを隠し、2以上の時は表示する */}
-      <div className={`w-[1050px] mb-4 ${workerCols > 1 ? 'overflow-x-auto' : 'overflow-hidden'}`}>
+      {/* ★ 1人の時の overflow-hidden を削除し、自然に表示。枠追加時のみ overflow-x-auto */}
+      <div className={`w-[1050px] mb-4 ${workerCols > 1 ? 'overflow-x-auto' : ''}`}>
+        {/* ★ table タグ自体に border border-slate-300 を追加 */}
         <table 
-          className="table-fixed border-collapse bg-white text-sm text-center"
+          className="table-fixed border-collapse border border-slate-300 bg-white text-sm text-center"
           style={{ width: `${1050 + (workerCols - 1) * 150}px` }}
         >
           <thead>
@@ -445,7 +449,8 @@ export default function MainForm({
         5. 協力業者
       </div>
       <div className="w-[1050px] mb-4">
-        <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
+        {/* ★ table タグ自体に border border-slate-300 を追加 */}
+        <table className="w-full table-fixed border-collapse border border-slate-300 bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border border-slate-300" style={{ width: '80px' }}>コピー</th>
@@ -516,7 +521,8 @@ export default function MainForm({
         6. 発注者立会人
       </div>
       <div className="w-[1050px] mb-4">
-        <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
+        {/* ★ table タグ自体に border border-slate-300 を追加 */}
+        <table className="w-full table-fixed border-collapse border border-slate-300 bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border border-slate-300" style={{ width: '80px' }}>コピー</th>
