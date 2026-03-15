@@ -33,58 +33,45 @@ export default function App() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
 
-  const isVercel = import.meta.env.VITE_IS_VERCEL === 'true';
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (isVercel) {
-        setIsAuthChecking(false);
-        return;
-      }
-      try {
-        const res = await fetch('/api/auth/me');
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-        }
-      } catch (error) {
-        console.error("Auth check failed", error);
-      } finally {
-        setIsAuthChecking(false);
-      }
-    };
-    checkAuth();
-  }, [isVercel]);
-
-  const safeFetch = async (url: string) => {
+  // PHP APIと通信するための共通ヘルパー
+  const fetchApi = async (action: string, payload: any = {}) => {
     try {
-      const res = await fetch(url);
-      if (!res.ok) return [];
-      const text = await res.text();
-      return JSON.parse(text);
-    } catch {
-      return []; 
+      const res = await fetch('api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, ...payload })
+      });
+      if (!res.ok) throw new Error('Network response was not ok');
+      return await res.json();
+    } catch (error) {
+      console.error('API Error:', error);
+      return null;
     }
   };
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      const data = await fetchApi('me');
+      if (data && data.status === 'success') {
+        setUser(data.user);
+      }
+      setIsAuthChecking(false);
+    };
+    checkAuth();
+  }, []);
+
   const fetchData = async () => {
     if (!user) return;
-    if (isVercel) {
-      setPlans([]); setPersonnel([]); setTemplates([]); setTeams([]);
-      return;
-    }
-    
     try {
-      const [plansRes, personnelRes, templatesRes, teamsRes] = await Promise.all([
-        safeFetch('/api/plans/all'), 
-        safeFetch('/api/personnel'),
-        safeFetch('/api/templates'), 
-        safeFetch('/api/teams')
-      ]);
-      setPlans(plansRes);
-      setPersonnel(personnelRes);
-      setTemplates(templatesRes);
-      setTeams(teamsRes);
+      const plansRes = await fetchApi('get_plans_all');
+      const personnelRes = await fetchApi('get_personnel');
+      const templatesRes = await fetchApi('get_templates');
+      const teamsRes = await fetchApi('get_teams');
+      
+      setPlans(plansRes || []);
+      setPersonnel(personnelRes || []);
+      setTemplates(templatesRes || []);
+      setTeams(teamsRes || []);
     } catch (error) {
       showAlert('データの取得に失敗しました。');
     }
@@ -95,9 +82,7 @@ export default function App() {
   }, [user, isPersonnelModalOpen, isTemplateModalOpen, isTeamModalOpen]);
 
   const handleLogout = async () => {
-    if (!isVercel) {
-      try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
-    }
+    await fetchApi('logout');
     setUser(null);
   };
 
@@ -109,11 +94,6 @@ export default function App() {
       autoTitle = `無題の計画書_${new Date().getTime()}`;
     }
 
-    if (isVercel) {
-      showAlert('【テスト環境】保存シミュレーション完了（※実際には保存されません）');
-      return;
-    }
-
     const currentDates = ['', '', '', '', ''];
     for (let i = 1; i <= 5; i++) {
       currentDates[i-1] = formData[`date_${i}`] || '';
@@ -123,18 +103,18 @@ export default function App() {
 
     const performSave = async (isOverwrite: boolean) => {
       try {
-        let res = isOverwrite && loadedPlanId
-          ? await fetch(`/api/plans/${loadedPlanId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-          : await fetch('/api/plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-
-        const data = await res.json();
-        if (res.ok && data.status === 'success') {
+        const action = isOverwrite && loadedPlanId ? 'overwrite_plan' : 'save_plan';
+        const reqPayload = isOverwrite && loadedPlanId ? { ...payload, id: loadedPlanId } : payload;
+        
+        const data = await fetchApi(action, reqPayload);
+        
+        if (data && data.status === 'success') {
           setLoadedPlanId(data.id);
           setLoadedDates(currentDates); 
           fetchData();
           showAlert('データベースに保存しました。');
         } else {
-          showAlert(data.error || '保存エラーが発生しました。');
+          showAlert(data?.error || '保存エラーが発生しました。');
         }
       } catch (error) {
         showAlert('保存エラーが発生しました。');
@@ -164,7 +144,6 @@ export default function App() {
           tempDates[i-1] = parsed[`date_${i}`] || '';
         }
         setLoadedDates(tempDates);
-
       } catch (e) {
         console.error("データのパースに失敗しました", e);
       }
@@ -172,14 +151,11 @@ export default function App() {
   };
 
   const handleExportPlan = async () => {
-    if (isVercel) {
-      showAlert('【テスト環境】Excel出力シミュレーション（※Vercel上では実際のExcel生成は行われません）');
-      return;
-    }
-
     try {
-      const res = await fetch('/api/export/plan', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData)
+      const res = await fetch('export.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'export_plan', data: formData })
       });
       
       if (res.ok) {
@@ -187,10 +163,12 @@ export default function App() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `安全作業計画書_${formData.job_no || '未定'}_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.xlsx`;
+        const jobNo = (formData.job_no || '未定').replace(/[^a-zA-Z0-9_-]/g, '');
+        a.download = `安全作業計画書_${jobNo}_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.xlsx`;
         document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url);
       } else {
-        showAlert('Excel出力に失敗しました。');
+        const errorData = await res.json();
+        showAlert(errorData.message || 'Excel出力に失敗しました。');
       }
     } catch (error) {
       showAlert('Excel出力エラーが発生しました。');
@@ -204,7 +182,6 @@ export default function App() {
   return (
     <>
       <div className="min-h-screen bg-slate-50 p-4 font-sans text-sm print:hidden">
-        {/* ★ 全体の枠を 1050px に完全固定 */}
         <div className="w-[1050px] mx-auto">
           
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4">
