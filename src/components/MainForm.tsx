@@ -22,12 +22,13 @@ export default function MainForm({
   const { showAlert, showConfirm } = useDialog();
   const [workerCols, setWorkerCols] = useState(1);
 
-  const sanitizeAlphanumericAndSymbols = (str: string) => {
+  // ★ 入力中の変換用（全角英数と各種ハイフンを半角に）
+  const toHalfWidth = (str: string) => {
     if (!str) return '';
     let halfVal = str.replace(/[！-～]/g, function(s) {
       return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
     });
-    return halfVal.replace(/[^\x20-\x7E]/g, '');
+    return halfVal.replace(/[ー－―−]/g, '-');
   };
 
   const targetNames = [
@@ -51,7 +52,8 @@ export default function MainForm({
         return pattern.test(name);
       });
 
-      if (isTarget) finalValue = sanitizeAlphanumericAndSymbols(value);
+      // IME保護のため、ここでは半角変換のみ行い、非ASCII文字の強制削除はしない
+      if (isTarget) finalValue = toHalfWidth(value);
 
       setFormData((prev: any) => {
         const newData = { ...prev, [name]: finalValue };
@@ -77,6 +79,22 @@ export default function MainForm({
         }
         return newData;
       });
+    }
+  };
+
+  // ★ 入力完了（フォーカスが外れた）時に、残った日本語などの全角文字を完全削除する
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    const isTarget = targetNames.some(pattern => {
+      if (typeof pattern === 'string') return name === pattern;
+      return pattern.test(name);
+    });
+
+    if (isTarget) {
+      const cleanedValue = value.replace(/[^\x20-\x7E]/g, '');
+      if (cleanedValue !== value) {
+        setFormData((prev: any) => ({ ...prev, [name]: cleanedValue }));
+      }
     }
   };
 
@@ -208,12 +226,13 @@ export default function MainForm({
       <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 flex justify-between items-center w-[1050px]">
         1. 基本情報
       </div>
-      {/* ★ 入力枠を半分にし、左寄せ・右余白の5列構成に変更 */}
       <table className="border-collapse border border-slate-300 bg-white text-sm mb-4 w-[1050px]">
         <tbody>
           <tr>
             <td className="bg-slate-100 p-2 border border-slate-300 w-[120px]">工番 (L12)</td>
-            <td className="p-2 border border-slate-300 w-[200px]"><input type="text" name="job_no" inputMode="url" value={formData.job_no || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+            <td className="p-2 border border-slate-300 w-[200px]">
+              <input type="text" name="job_no" inputMode="url" value={formData.job_no || ''} onChange={handleChange} onBlur={handleBlur} className="w-full border rounded p-1" />
+            </td>
             <td className="bg-slate-100 p-2 border border-slate-300 w-[100px]">チーム</td>
             <td className="p-2 border border-slate-300 w-[200px]">
               <select name="team_id" value={formData.team_id || ''} onChange={handleChange} className="w-full border rounded p-1">
@@ -221,7 +240,7 @@ export default function MainForm({
                 {filteredTeams.map(t => <option key={t.id} value={t.id}>{t.team_name}</option>)}
               </select>
             </td>
-            <td className="p-2 border border-slate-300 bg-slate-50 w-[430px]"></td> {/* 右側の余白エリア */}
+            <td className="p-2 border border-slate-300 bg-slate-50 w-[430px]"></td>
           </tr>
           <tr>
             <td className="bg-slate-100 p-2 border border-slate-300">工事内容 (B12)</td>
@@ -279,7 +298,6 @@ export default function MainForm({
         </div>
       </div>
       <div className="w-[1050px] mb-4">
-        {/* ★ table タグ自体に border border-slate-300 を追加して右線の切れを防止 */}
         <table className="w-full table-fixed border-collapse border border-slate-300 bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
@@ -342,9 +360,7 @@ export default function MainForm({
           {workerCols > 1 && <button type="button" onClick={() => setWorkerCols(prev => prev - 1)} className="bg-rose-500 text-white px-2 py-1 rounded text-xs font-bold">－ 枠を減らす</button>}
         </div>
       </div>
-      {/* ★ 1人の時の overflow-hidden を削除し、自然に表示。枠追加時のみ overflow-x-auto */}
       <div className={`w-[1050px] mb-4 ${workerCols > 1 ? 'overflow-x-auto' : ''}`}>
-        {/* ★ table タグ自体に border border-slate-300 を追加 */}
         <table 
           className="table-fixed border-collapse border border-slate-300 bg-white text-sm text-center"
           style={{ width: `${1050 + (workerCols - 1) * 150}px` }}
@@ -449,7 +465,6 @@ export default function MainForm({
         5. 協力業者
       </div>
       <div className="w-[1050px] mb-4">
-        {/* ★ table タグ自体に border border-slate-300 を追加 */}
         <table className="w-full table-fixed border-collapse border border-slate-300 bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
@@ -502,10 +517,10 @@ export default function MainForm({
                     </select>
                   </td>
                   <td className="p-2 border border-slate-300"><input type="text" name={`part_phone_${day}`} value={formData[`part_phone_${day}`] || ''} readOnly className="w-full border rounded p-1 bg-slate-100" /></td>
-                  <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`part_count_${day}`} value={formData[`part_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-                  <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`part_g_count_${day}`} value={formData[`part_g_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-                  <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`part_t_count_${day}`} value={formData[`part_t_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-                  <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`part_other_${day}`} value={formData[`part_other_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                  <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`part_count_${day}`} value={formData[`part_count_${day}`] || ''} onChange={handleChange} onBlur={handleBlur} className="w-full border rounded p-1" /></td>
+                  <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`part_g_count_${day}`} value={formData[`part_g_count_${day}`] || ''} onChange={handleChange} onBlur={handleBlur} className="w-full border rounded p-1" /></td>
+                  <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`part_t_count_${day}`} value={formData[`part_t_count_${day}`] || ''} onChange={handleChange} onBlur={handleBlur} className="w-full border rounded p-1" /></td>
+                  <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`part_other_${day}`} value={formData[`part_other_${day}`] || ''} onChange={handleChange} onBlur={handleBlur} className="w-full border rounded p-1" /></td>
                   <td className="p-2 border border-slate-300 text-center">
                     <button type="button" onClick={() => clearDay(day)} className="border border-rose-500 text-rose-500 px-3 py-1 rounded text-xs hover:bg-rose-500 hover:text-white whitespace-nowrap">クリア</button>
                   </td>
@@ -521,7 +536,6 @@ export default function MainForm({
         6. 発注者立会人
       </div>
       <div className="w-[1050px] mb-4">
-        {/* ★ table タグ自体に border border-slate-300 を追加 */}
         <table className="w-full table-fixed border-collapse border border-slate-300 bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
@@ -540,7 +554,7 @@ export default function MainForm({
                     <span className="text-[10px] text-slate-600">≡掴む≡</span>
                   </div>
                 </td>
-                <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`client_num_${day}`} value={formData[`client_num_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`client_num_${day}`} value={formData[`client_num_${day}`] || ''} onChange={handleChange} onBlur={handleBlur} className="w-full border rounded p-1" /></td>
                 <td className="p-2 border border-slate-300"><input type="text" name={`client_name_${day}`} value={formData[`client_name_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
                 <td className="p-2 border border-slate-300 text-center">
                   <button type="button" onClick={() => clearDay(day)} className="border border-rose-500 text-rose-500 px-3 py-1 rounded text-xs hover:bg-rose-500 hover:text-white whitespace-nowrap">クリア</button>
