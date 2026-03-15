@@ -120,9 +120,9 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
   const exportGaigyoExcel = async () => {
     try {
       const exportData = rows.map(r => [
-        '', // Noはサーバー側で振るか無視する
+        '',
         r.rawDate,
-        '', // 曜日
+        '',
         r.gyomuName,
         r.leader,
         r.phone,
@@ -168,11 +168,9 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
   const dayOfWeekStr = ['日', '月', '火', '水', '木', '金', '土'];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 print:p-0 print:bg-white">
-      {/* ★ 印刷時に表示領域を制御するためのID (gaigyo-print-area) を付与 */}
-      <div id="gaigyo-print-area" className="bg-white rounded-xl shadow-xl w-full max-w-[1800px] max-h-[95vh] flex flex-col print:shadow-none print:max-h-none print:w-full">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 print:p-0 print:bg-white print:block print:relative">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-[1800px] max-h-[95vh] flex flex-col print:shadow-none print:max-h-none print:w-full print:m-0">
         
-        {/* ★ 印刷時にボタン類を隠す (print:hidden) */}
         <div className="flex justify-between items-center p-4 border-b border-slate-200 print:hidden">
           <h3 className="text-xl font-bold text-slate-800 m-0 flex items-center gap-2">
             📋 外業管理表
@@ -234,7 +232,7 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
                     <td className="p-1 border border-slate-300 text-center">{r.dayNight}</td>
                     <td className="p-1 border border-slate-300 text-center">{r.timeStr}</td>
                     <td className="p-1 border border-slate-300 text-center font-bold text-indigo-700">{r.yoruNo}</td>
-                    <td className="p-0 border border-slate-300"><input type="text" defaultValue={r.isRyuchi} className="w-full p-1 border-none focus:ring-1 focus:ring-indigo-500" /></td>
+                    <td className="p-0 border border-slate-300"><input type="text" defaultValue={r.isRyuchi} className="w-full p-1 border-none focus:ring-1 focus:ring-indigo-500 print:bg-transparent print:border-none print:shadow-none" /></td>
                     <td className="p-1 border border-slate-300">{r.location}</td>
                     <td className="p-1 border border-slate-300">{r.partName}</td>
                     <td className="p-1 border border-slate-300 text-center">{r.partLeader}</td>
@@ -242,7 +240,7 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
                     <td className="p-1 border border-slate-300 text-center">{r.partCount}</td>
                     <td className="p-1 border border-slate-300 text-center">{r.partGCount}</td>
                     <td className="p-1 border border-slate-300 text-center">{r.partTCount}</td>
-                    <td className="p-0 border border-slate-300"><input type="text" defaultValue={r.partOther} className="w-full p-1 border-none focus:ring-1 focus:ring-indigo-500" /></td>
+                    <td className="p-0 border border-slate-300"><input type="text" defaultValue={r.partOther} className="w-full p-1 border-none focus:ring-1 focus:ring-indigo-500 print:bg-transparent print:border-none print:shadow-none" /></td>
                   </tr>
                 );
               })}
