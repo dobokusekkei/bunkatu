@@ -8,7 +8,11 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const fetchGaigyoData = async () => {
       try {
-        const res = await fetch('/api/plans/all');
+        const res = await fetch('api.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get_plans_all' })
+        });
         const data = await res.json();
         
         let newRows: any[] = [];
@@ -88,7 +92,7 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
               }
             }
             
-            const isRyuchi = parsed['chk_ryuchi_'+i] ? 'あり' : '';
+            const isRyuchi = parsed['chk_ryuchi_'+i] ? '留置変更あり' : '';
             const partName = parsed['part_name_'+i] || '';
             const partLeader = parsed['part_leader_'+i] || '';
             const partPhone = parsed['part_phone_'+i] || '';
@@ -119,32 +123,30 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
 
   const exportGaigyoExcel = async () => {
     try {
-      const exportData = rows.map(r => [
-        '',
-        r.rawDate,
-        '',
-        r.gyomuName,
-        r.leader,
-        r.phone,
-        r.workerStr,
-        r.dayNight,
-        r.timeStr,
-        r.yoruNo,
-        r.isRyuchi,
-        r.location,
-        r.partName,
-        r.partLeader,
-        r.partPhone,
-        r.partCount,
-        r.partGCount,
-        r.partTCount,
-        r.partOther
-      ]);
+      const table = document.getElementById('gaigyoTable') as HTMLTableElement;
+      const rowElements = table.querySelectorAll('tbody tr');
+      let exportData: any[] = [];
+      
+      rowElements.forEach(tr => {
+        let rowData: string[] = [];
+        let tds = tr.querySelectorAll('td');
+        tds.forEach((td, idx) => {
+          let input = td.querySelector('input');
+          if (input) {
+            rowData.push(input.value); 
+          } else if (idx === 3 && (tr as HTMLElement).dataset.rawGyomu) {
+            rowData.push((tr as HTMLElement).dataset.rawGyomu!);
+          } else {
+            rowData.push(td.innerText.replace(/\n/g, ' ').trim());
+          }
+        });
+        exportData.push(rowData);
+      });
 
-      const res = await fetch('/api/export/gaigyo', {
+      const res = await fetch('export.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(exportData)
+        body: JSON.stringify({ action: 'export_gaigyo', data: exportData })
       });
 
       if (res.ok) {
@@ -158,18 +160,19 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
         a.remove();
         window.URL.revokeObjectURL(url);
       } else {
-        showAlert('【テスト環境】Excel出力シミュレーション（※Vercel上では出力されません）');
+        const errorData = await res.json();
+        showAlert(errorData.message || 'Excel出力に失敗しました。');
       }
     } catch (error) {
-      showAlert('【テスト環境】Excel出力シミュレーション（※Vercel上では出力されません）');
+      showAlert('Excel出力エラーが発生しました。');
     }
   };
 
   const dayOfWeekStr = ['日', '月', '火', '水', '木', '金', '土'];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-[1800px] max-h-[95vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 print:p-0 print:bg-white print:block print:relative">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-[1800px] max-h-[95vh] flex flex-col print:shadow-none print:max-h-none print:w-full print:m-0">
         
         <div className="flex justify-between items-center p-4 border-b border-slate-200 print:hidden">
           <h3 className="text-xl font-bold text-slate-800 m-0 flex items-center gap-2">
@@ -189,8 +192,8 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        <div className="p-4 overflow-y-auto flex-1">
-          <table className="w-full border-collapse text-xs border border-slate-300">
+        <div className="p-4 overflow-y-auto flex-1 print:overflow-visible print:p-0">
+          <table className="w-full border-collapse text-xs border border-slate-300" id="gaigyoTable">
             <thead>
               <tr className="bg-slate-100 text-slate-800 border-b border-slate-300">
                 <th className="p-2 border border-slate-300 w-[30px]">No.</th>
@@ -221,18 +224,25 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
                 const dateFmt = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
                 
                 return (
-                  <tr key={idx} className="border-b border-slate-300">
+                  <tr key={idx} className="border-b border-slate-300" data-raw-gyomu={r.gyomuName}>
                     <td className="p-1 border border-slate-300 text-center">{idx + 1}</td>
                     <td className="p-1 border border-slate-300 text-center">{dateFmt}</td>
                     <td className="p-1 border border-slate-300 text-center">{w}</td>
-                    <td className="p-1 border border-slate-300">{r.gyomuName}</td>
+                    <td className="p-1 border border-slate-300">
+                      {r.gyomuName.includes('（予備日）') ? (
+                        <>
+                          {r.gyomuName.replace('（予備日）', '')}
+                          <span className="text-rose-600 border border-rose-600 px-1 rounded ml-1 text-[10px]">予備日</span>
+                        </>
+                      ) : r.gyomuName}
+                    </td>
                     <td className="p-1 border border-slate-300 text-center">{r.leader}</td>
                     <td className="p-1 border border-slate-300 text-center">{r.phone}</td>
                     <td className="p-1 border border-slate-300">{r.workerStr}</td>
-                    <td className="p-1 border border-slate-300 text-center">{r.dayNight}</td>
+                    <td className="p-1 border border-slate-300 text-center font-bold">{r.dayNight}</td>
                     <td className="p-1 border border-slate-300 text-center">{r.timeStr}</td>
                     <td className="p-1 border border-slate-300 text-center font-bold text-indigo-700">{r.yoruNo}</td>
-                    <td className="p-0 border border-slate-300"><input type="text" defaultValue={r.isRyuchi} className="w-full p-1 border-none focus:ring-1 focus:ring-indigo-500" /></td>
+                    <td className="p-0 border border-slate-300"><input type="text" defaultValue={r.isRyuchi} className="w-full p-1 border-none focus:ring-1 focus:ring-indigo-500 print:bg-transparent print:border-none print:shadow-none" /></td>
                     <td className="p-1 border border-slate-300">{r.location}</td>
                     <td className="p-1 border border-slate-300">{r.partName}</td>
                     <td className="p-1 border border-slate-300 text-center">{r.partLeader}</td>
@@ -240,7 +250,7 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
                     <td className="p-1 border border-slate-300 text-center">{r.partCount}</td>
                     <td className="p-1 border border-slate-300 text-center">{r.partGCount}</td>
                     <td className="p-1 border border-slate-300 text-center">{r.partTCount}</td>
-                    <td className="p-0 border border-slate-300"><input type="text" defaultValue={r.partOther} className="w-full p-1 border-none focus:ring-1 focus:ring-indigo-500" /></td>
+                    <td className="p-0 border border-slate-300"><input type="text" defaultValue={r.partOther} className="w-full p-1 border-none focus:ring-1 focus:ring-indigo-500 print:bg-transparent print:border-none print:shadow-none" /></td>
                   </tr>
                 );
               })}
