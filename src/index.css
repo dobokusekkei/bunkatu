@@ -1,35 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* ★ 印刷時のスタイル制御
-  印刷プレビューで裏のメインフォームなどを隠し、外業管理表だけを綺麗に印刷させます。
-*/
-@media print {
-  /* 画面上のすべての要素を一旦見えなくする */
-  body * {
-    visibility: hidden;
-  }
-
-  /* 外業管理表のエリアとその中身だけを見えるようにする */
-  #gaigyo-print-area, #gaigyo-print-area * {
-    visibility: visible;
-  }
-
-  /* 外業管理表をページの左上にぴったり配置する */
-  #gaigyo-print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-
-  /* 印刷時にinputの枠線を消して、文字だけが紙に印刷されるようにする */
-  #gaigyo-print-area input[type="text"] {
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-  }
-}
