@@ -10,7 +10,11 @@ export default function TemplateModal({ onClose }: { onClose: () => void }) {
 
   const fetchTemplates = async () => {
     try {
-      const res = await fetch('/api/templates');
+      const res = await fetch('api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_templates' })
+      });
       const data = await res.json();
       setTemplates(data);
     } catch (error) {
@@ -27,19 +31,11 @@ export default function TemplateModal({ onClose }: { onClose: () => void }) {
     if (!title || !content) return showAlert('タイトルと本文を入力してください。');
     
     try {
-      if (id) {
-        await fetch(`/api/templates/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, content })
-        });
-      } else {
-        await fetch('/api/templates', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, content })
-        });
-      }
+      await fetch('api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save_template', id, title, content })
+      });
       resetForm();
       fetchTemplates();
     } catch (error) {
@@ -57,7 +53,11 @@ export default function TemplateModal({ onClose }: { onClose: () => void }) {
   const handleDelete = async (deleteId: number) => {
     showConfirm('このテンプレートを削除しますか？\n（元に戻すことはできません）', async () => {
       try {
-        await fetch(`/api/templates/${deleteId}`, { method: 'DELETE' });
+        await fetch('api.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete_template', id: deleteId })
+        });
         if (id === deleteId) resetForm();
         fetchTemplates();
       } catch (error) {
