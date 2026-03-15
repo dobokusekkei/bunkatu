@@ -16,21 +16,22 @@ $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 // ==========================================
 // 1. データベース初期化 ＆ アップデート
 // ==========================================
-// ユーザーテーブル作成と初期管理者登録
+// ★ 新規追加：ユーザーテーブル（ログイン用）
 $pdo->exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, login_id TEXT UNIQUE, password TEXT, name TEXT, department TEXT, role TEXT)");
 $stmt = $pdo->query("SELECT COUNT(*) FROM users");
 if ($stmt->fetchColumn() == 0) {
+    // 初期管理者アカウント（ID: admin, PASS: admin）
     $pw = password_hash('admin', PASSWORD_DEFAULT);
     $pdo->exec("INSERT INTO users (login_id, password, name, department, role) VALUES ('admin', '$pw', 'システム管理者', 'システム管理部', '管理者')");
 }
 
 // 既存テーブル作成
-$pdo->exec("CREATE TABLE IF NOT EXISTS personnel (id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT, company TEXT, name TEXT, phone TEXT, department TEXT)");
+$pdo->exec("CREATE TABLE IF NOT EXISTS personnel (id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT, company TEXT, name TEXT, phone TEXT)");
 $pdo->exec("CREATE TABLE IF NOT EXISTS saved_plans (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, form_data TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 $pdo->exec("CREATE TABLE IF NOT EXISTS safety_templates (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS team_settings (id INTEGER PRIMARY KEY AUTOINCREMENT, group_name TEXT, group_leader_name TEXT, group_leader_phone TEXT, team_name TEXT, contact1_name TEXT, contact1_phone TEXT, contact2_name TEXT, contact2_phone TEXT, department TEXT)");
+$pdo->exec("CREATE TABLE IF NOT EXISTS team_settings (id INTEGER PRIMARY KEY AUTOINCREMENT, group_name TEXT, group_leader_name TEXT, group_leader_phone TEXT, team_name TEXT, contact1_name TEXT, contact1_phone TEXT, contact2_name TEXT, contact2_phone TEXT)");
 
-// 既存テーブルへのカラム追加（アップデート対応）
+// カラム追加関数（アップデート対応）
 function addColumnIfNotExists($pdo, $table, $column, $type) {
     $rs = $pdo->query("PRAGMA table_info($table)");
     $columns = [];
@@ -39,6 +40,7 @@ function addColumnIfNotExists($pdo, $table, $column, $type) {
         $pdo->exec("ALTER TABLE $table ADD COLUMN $column $type");
     }
 }
+// 部署カラムの追加
 addColumnIfNotExists($pdo, 'personnel', 'department', 'TEXT DEFAULT ""');
 addColumnIfNotExists($pdo, 'team_settings', 'department', 'TEXT DEFAULT ""');
 
@@ -56,7 +58,7 @@ if ($stmt->fetchColumn() == 0) {
 // ==========================================
 $input = file_get_contents('php://input');
 $req = json_decode($input, true) ?? [];
-$action = $req['action'] ?? $_GET['action'] ?? '';
+$action = $req['action'] ?? '';
 
 try {
     switch ($action) {
@@ -66,7 +68,7 @@ try {
             $stmt->execute([$req['login_id']]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($user && password_verify($req['password'], $user['password'])) {
-                unset($user['password']);
+                unset($user['password']); // セキュリティのためパスワードは除外してセッションへ
                 $_SESSION['user'] = $user;
                 echo json_encode(['status' => 'success', 'user' => $user]);
             } else {
@@ -88,12 +90,41 @@ try {
             echo json_encode(['status' => 'success']);
             break;
 
+        // --- ユーザー管理系 ---
+        case 'get_users':
+            $stmt = $pdo->query("SELECT id, login_id, name, department, role FROM users ORDER BY department, role DESC");
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+
+        case 'save_user':
+            $pwHash = !empty($req['password']) ? password_hash($req['password'], PASSWORD_DEFAULT) : null;
+            if (!empty($req['id'])) {
+                if ($pwHash) {
+                    $stmt = $pdo->prepare("UPDATE users SET login_id=?, password=?, name=?, department=?, role=? WHERE id=?");
+                    $stmt->execute([$req['login_id'], $pwHash, $req['name'], $req['department'], $req['role'], $req['id']]);
+                } else {
+                    $stmt = $pdo->prepare("UPDATE users SET login_id=?, name=?, department=?, role=? WHERE id=?");
+                    $stmt->execute([$req['login_id'], $req['name'], $req['department'], $req['role'], $req['id']]);
+                }
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO users (login_id, password, name, department, role) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$req['login_id'], $pwHash, $req['name'], $req['department'], $req['role']]);
+            }
+            echo json_encode(['status' => 'success']);
+            break;
+
+        case 'delete_user':
+            $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+            $stmt->execute([$req['id']]);
+            echo json_encode(['status' => 'success']);
+            break;
+
         // --- 計画書関連 ---
         case 'save_plan':
             $title = trim($req['title']);
             $form_data = $req['form_data'];
             
-            // タイトルの重複チェックと連番付与
+            // 同名タイトルの自動連番付与処理
             if (preg_match('/^(.*)_(\d+)$/', $title, $matches)) {
                 $base_title = $matches[1];
                 $counter = (int)$matches[2];
@@ -123,11 +154,6 @@ try {
             $stmt = $pdo->prepare("UPDATE saved_plans SET title = ?, form_data = ? WHERE id = ?");
             $stmt->execute([$req['title'], $req['form_data'], $req['id']]);
             echo json_encode(['status' => 'success', 'saved_title' => $req['title'], 'id' => $req['id']]);
-            break;
-
-        case 'get_plans':
-            $stmt = $pdo->query("SELECT id, title, created_at FROM saved_plans ORDER BY id DESC");
-            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             break;
 
         case 'get_plans_all':
