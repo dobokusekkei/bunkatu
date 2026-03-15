@@ -1,1 +1,44 @@
 @import "tailwindcss";
+
+@media print {
+  @page {
+    size: A3 landscape;
+    margin: 10mm;
+  }
+  
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background-color: white;
+  }
+
+  /* モーダルの背景と位置制約を解除し、印刷用紙全体に展開させる */
+  .fixed.inset-0 {
+    position: absolute !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  /* スクロールバーを消し、テーブルの全行が紙に印刷されるようにする */
+  .overflow-y-auto {
+    overflow: visible !important;
+  }
+  .max-h-\[95vh\] {
+    max-height: none !important;
+  }
+
+  /* 影や丸角などの不要な装飾を消去 */
+  .shadow-xl {
+    box-shadow: none !important;
+  }
+  .rounded-xl {
+    border-radius: 0 !important;
+  }
+
+  /* 印刷時にinputの枠線を消す */
+  input[type="text"] {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+}
