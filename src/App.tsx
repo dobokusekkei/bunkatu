@@ -16,7 +16,6 @@ export default function App() {
   const [user, setUser] = useState<any>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
-  // モーダル開閉用のState
   const [isPersonnelModalOpen, setIsPersonnelModalOpen] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
@@ -25,7 +24,6 @@ export default function App() {
   const [isUserManagementModalOpen, setIsUserManagementModalOpen] = useState(false);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
-  // データ管理用のState
   const [loadedPlanId, setLoadedPlanId] = useState<number | null>(null);
   const [loadedDates, setLoadedDates] = useState<string[]>(['', '', '', '', '']);
   const [plans, setPlans] = useState<any[]>([]);
@@ -38,10 +36,8 @@ export default function App() {
   const [loadedTitle, setLoadedTitle] = useState('');
   const prevJobNoRef = useRef('');
 
-  // Vercelテスト環境かどうかの判定フラグ
   const isVercel = import.meta.env.VITE_IS_VERCEL === 'true';
 
-  // 初回ロード時の認証チェック
   useEffect(() => {
     const checkAuth = async () => {
       if (isVercel) {
@@ -63,7 +59,6 @@ export default function App() {
     checkAuth();
   }, [isVercel]);
 
-  // Vercel等のバックエンド不在環境でもアプリがクラッシュしないようにする安全なFetch関数
   const safeFetch = async (url: string) => {
     try {
       const res = await fetch(url);
@@ -109,9 +104,6 @@ export default function App() {
     setUser(null);
   };
 
-  // ==========================================
-  // 保存処理（タイトルの自動生成・上書き判定）
-  // ==========================================
   const handleSave = async () => {
     const job = formData.job_no || '';
     const content = formData.job_content || '';
@@ -162,9 +154,6 @@ export default function App() {
     }
   };
 
-  // ==========================================
-  // 読込処理
-  // ==========================================
   const handleLoadPlan = async () => {
     if (!loadedPlanId) return;
     const plan = plans.find(p => p.id === loadedPlanId);
@@ -185,9 +174,6 @@ export default function App() {
     }
   };
 
-  // ==========================================
-  // Excel出力処理
-  // ==========================================
   const handleExportPlan = async () => {
     if (isVercel) {
       showAlert('【テスト環境】Excel出力シミュレーション（※Vercel上では実際のExcel生成は行われません）');
@@ -219,81 +205,82 @@ export default function App() {
   if (!user) return <Login onLogin={setUser} />;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 font-sans text-sm">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4">
-          <div className="flex justify-between items-center border-b-2 border-indigo-900 pb-2 mb-4">
-            <h2 className="text-xl font-bold text-indigo-900">安全作業計画書 入力・DB管理システム</h2>
-            <div className="text-slate-700 font-medium">👤 {user.name} ({user.department})</div>
-          </div>
+    <>
+      {/* ★ 印刷時（Ctrl+P）はこのメイン画面全体を非表示にする (print:hidden) */}
+      <div className="min-h-screen bg-slate-50 p-4 font-sans text-sm print:hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4">
+            <div className="flex justify-between items-center border-b-2 border-indigo-900 pb-2 mb-4">
+              <h2 className="text-xl font-bold text-indigo-900">安全作業計画書 入力・DB管理システム</h2>
+              <div className="text-slate-700 font-medium">👤 {user.name} ({user.department})</div>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-2 bg-slate-100 p-2 rounded-lg border border-slate-200">
-            <button onClick={() => setIsPersonnelModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium text-xs">
-              <Users size={16} /> 名簿管理
-            </button>
-            <button onClick={() => setIsTeamModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium text-xs">
-              <Settings size={16} /> チーム管理
-            </button>
-            
-            <div className="w-px h-6 bg-slate-300 mx-1"></div>
-            
-            <button onClick={handleSave} className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 font-medium text-xs">
-              <Save size={16} /> DBに保存
-            </button>
-            
-            <div className="w-px h-6 bg-slate-300 mx-1"></div>
-            
-            <button onClick={() => setIsPlanListModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 text-slate-900 rounded hover:bg-amber-600 font-medium text-xs">
-              <FolderOpen size={16} /> 保存データ一覧
-            </button>
-            <button onClick={() => setIsGaigyoModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-cyan-600 text-white rounded hover:bg-cyan-700 font-medium text-xs ml-1">
-              <ClipboardList size={16} /> 外業管理表
-            </button>
-            
-            <div className="flex-1"></div>
-            
-            <button onClick={() => setIsManualModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-700 font-medium text-xs">
-              <BookOpen size={16} /> 使い方
-            </button>
-            {user.role === '管理者' && (
-              <button onClick={() => setIsUserManagementModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 font-medium text-xs ml-1">
-                <UserCog size={16} /> ユーザー管理
+            <div className="flex flex-wrap items-center gap-2 bg-slate-100 p-2 rounded-lg border border-slate-200">
+              <button onClick={() => setIsPersonnelModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium text-xs">
+                <Users size={16} /> 名簿管理
               </button>
-            )}
-            <button onClick={handleLogout} className="flex items-center gap-1 px-3 py-1.5 bg-rose-600 text-white rounded hover:bg-rose-700 font-medium text-xs ml-1">
-              <LogOut size={16} /> ログアウト
-            </button>
+              <button onClick={() => setIsTeamModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium text-xs">
+                <Settings size={16} /> チーム管理
+              </button>
+              
+              <div className="w-px h-6 bg-slate-300 mx-1"></div>
+              
+              <button onClick={handleSave} className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 font-medium text-xs">
+                <Save size={16} /> DBに保存
+              </button>
+              
+              <div className="w-px h-6 bg-slate-300 mx-1"></div>
+              
+              <button onClick={() => setIsPlanListModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 text-slate-900 rounded hover:bg-amber-600 font-medium text-xs">
+                <FolderOpen size={16} /> 保存データ一覧
+              </button>
+              <button onClick={() => setIsGaigyoModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-cyan-600 text-white rounded hover:bg-cyan-700 font-medium text-xs ml-1">
+                <ClipboardList size={16} /> 外業管理表
+              </button>
+              
+              <div className="flex-1"></div>
+              
+              <button onClick={() => setIsManualModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-700 font-medium text-xs">
+                <BookOpen size={16} /> 使い方
+              </button>
+              {user.role === '管理者' && (
+                <button onClick={() => setIsUserManagementModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 font-medium text-xs ml-1">
+                  <UserCog size={16} /> ユーザー管理
+                </button>
+              )}
+              <button onClick={handleLogout} className="flex items-center gap-1 px-3 py-1.5 bg-rose-600 text-white rounded hover:bg-rose-700 font-medium text-xs ml-1">
+                <LogOut size={16} /> ログアウト
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <MainForm 
-            formData={formData} 
-            setFormData={setFormData} 
-            personnel={personnel} 
-            templates={templates} 
-            teams={teams} 
-            setIsTemplateModalOpen={setIsTemplateModalOpen}
-            user={user} 
-          />
-          
-          <div className="mt-8 pt-6 border-t border-slate-200 flex justify-center">
-            <button 
-              onClick={handleExportPlan} 
-              className="inline-flex items-center justify-center gap-2 px-10 py-3 bg-[#217346] text-white rounded-lg hover:bg-[#1e6b3e] font-bold text-lg shadow-md transition-colors"
-            >
-              <Download size={24} /> 出力 (Excel形式でダウンロード)
-            </button>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <MainForm 
+              formData={formData} 
+              setFormData={setFormData} 
+              personnel={personnel} 
+              templates={templates} 
+              teams={teams} 
+              setIsTemplateModalOpen={setIsTemplateModalOpen}
+              user={user} 
+            />
+            
+            <div className="mt-8 pt-6 border-t border-slate-200 flex justify-center">
+              <button 
+                onClick={handleExportPlan} 
+                className="inline-flex items-center justify-center gap-2 px-10 py-3 bg-[#217346] text-white rounded-lg hover:bg-[#1e6b3e] font-bold text-lg shadow-md transition-colors"
+              >
+                <Download size={24} /> 出力 (Excel形式でダウンロード)
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {isPersonnelModalOpen && <PersonnelModal onClose={() => setIsPersonnelModalOpen(false)} />}
+      {/* ★ 各種モーダル（GaigyoModalだけは印刷時に表示される仕組みを持っている） */}
+      {isPersonnelModalOpen && <PersonnelModal onClose={() => setIsPersonnelModalOpen(false)} user={user} fetchData={fetchData} />}
       {isTemplateModalOpen && <TemplateModal onClose={() => setIsTemplateModalOpen(false)} />}
-      
-      {/* ★ チーム管理モーダルに user と fetchData を渡す */}
       {isTeamModalOpen && <TeamModal onClose={() => setIsTeamModalOpen(false)} user={user} fetchData={fetchData} />}
-      
       {isPlanListModalOpen && (
         <PlanListModal 
           onClose={() => setIsPlanListModalOpen(false)} 
@@ -311,6 +298,6 @@ export default function App() {
       {isManualModalOpen && <ManualModal onClose={() => setIsManualModalOpen(false)} />}
       
       <button id="trigger-load" className="hidden" onClick={handleLoadPlan}></button>
-    </div>
+    </>
   );
 }
