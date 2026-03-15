@@ -5,9 +5,8 @@ export default function TeamModal({ onClose, user, fetchData }: { onClose: () =>
   const { showAlert, showConfirm } = useDialog();
   const [teams, setTeams] = useState<any[]>([]);
   
-  // フォーム用State
   const [id, setId] = useState<number | null>(null);
-  const [teamDept, setTeamDept] = useState(user.department || ''); // 所属部署
+  const [teamDept, setTeamDept] = useState(user.department || ''); 
   const [groupName, setGroupName] = useState('');
   const [groupLeaderName, setGroupLeaderName] = useState('');
   const [groupLeaderPhone, setGroupLeaderPhone] = useState('');
@@ -17,12 +16,15 @@ export default function TeamModal({ onClose, user, fetchData }: { onClose: () =>
   const [contact2Name, setContact2Name] = useState('');
   const [contact2Phone, setContact2Phone] = useState('');
 
-  // 管理者向けの絞り込みフィルター（一般ユーザーは自分の部署で固定）
   const [filterDept, setFilterDept] = useState(user.role === '管理者' ? '' : user.department);
 
   const fetchTeams = async () => {
     try {
-      const res = await fetch('/api/teams');
+      const res = await fetch('api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_teams' })
+      });
       if (res.ok) {
         const data = await res.json();
         setTeams(data);
@@ -40,11 +42,12 @@ export default function TeamModal({ onClose, user, fetchData }: { onClose: () =>
   const handleSave = async () => {
     if (!teamName) return showAlert('チーム名を入力してください。');
     
-    // 一般ユーザーが作成・編集する場合は、強制的に自分の部署をセットする
     const saveDept = user.role === '管理者' ? teamDept : user.department;
 
     const payload = {
-      department: saveDept, // ★ 追加
+      action: 'save_team',
+      id,
+      department: saveDept,
       group_name: groupName,
       group_leader_name: groupLeaderName,
       group_leader_phone: groupLeaderPhone,
@@ -56,22 +59,14 @@ export default function TeamModal({ onClose, user, fetchData }: { onClose: () =>
     };
 
     try {
-      if (id) {
-        await fetch(`/api/teams/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      } else {
-        await fetch('/api/teams', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      }
+      await fetch('api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
       resetForm();
       fetchTeams();
-      fetchData(); // App.tsxのデータも更新
+      fetchData(); 
     } catch (error) {
       console.error(error);
       showAlert('保存に失敗しました。');
@@ -80,7 +75,7 @@ export default function TeamModal({ onClose, user, fetchData }: { onClose: () =>
 
   const handleEdit = (t: any) => {
     setId(t.id);
-    setTeamDept(t.department || ''); // 既存データに無い場合は空
+    setTeamDept(t.department || ''); 
     setGroupName(t.group_name || '');
     setGroupLeaderName(t.group_leader_name || '');
     setGroupLeaderPhone(t.group_leader_phone || '');
@@ -94,10 +89,14 @@ export default function TeamModal({ onClose, user, fetchData }: { onClose: () =>
   const handleDelete = async (deleteId: number) => {
     showConfirm('このチームを削除しますか？', async () => {
       try {
-        await fetch(`/api/teams/${deleteId}`, { method: 'DELETE' });
+        await fetch('api.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete_team', id: deleteId })
+        });
         if (id === deleteId) resetForm();
         fetchTeams();
-        fetchData(); // App.tsxのデータも更新
+        fetchData(); 
       } catch (error) {
         console.error(error);
         showAlert('削除に失敗しました。');
@@ -118,21 +117,18 @@ export default function TeamModal({ onClose, user, fetchData }: { onClose: () =>
     setContact2Phone('');
   };
 
-  // プルダウン用：登録されている全チームから一意の部署リストを作成
   const uniqueDepts = useMemo(() => {
     const depts = new Set(teams.map(t => t.department).filter(Boolean));
-    if (user.role === '管理者' && user.department) depts.add(user.department); // 管理者の部署も確保
+    if (user.role === '管理者' && user.department) depts.add(user.department);
     return Array.from(depts).sort();
   }, [teams, user]);
 
-  // リストの絞り込み表示
   const filteredTeams = useMemo(() => {
     if (user.role === '管理者') {
       if (filterDept === '未設定') return teams.filter(t => !t.department);
-      if (filterDept === '') return teams; // すべて表示
+      if (filterDept === '') return teams;
       return teams.filter(t => t.department === filterDept);
     } else {
-      // 一般ユーザーは自分の部署のみ
       return teams.filter(t => t.department === user.department);
     }
   }, [teams, filterDept, user]);
@@ -145,7 +141,6 @@ export default function TeamModal({ onClose, user, fetchData }: { onClose: () =>
         <div className="bg-slate-50 p-4 rounded-lg mb-6 border border-slate-200">
           <b className="block mb-3 text-sm text-indigo-900">{id ? 'チーム情報の編集' : '新規チーム追加'}</b>
           
-          {/* 管理者の場合のみ、どの部署のチームとして登録するか選択できる */}
           {user.role === '管理者' && (
             <div className="mb-4">
               <label className="text-xs font-bold mr-2">所属部署:</label>
@@ -156,7 +151,7 @@ export default function TeamModal({ onClose, user, fetchData }: { onClose: () =>
               >
                 <option value="">未設定</option>
                 {uniqueDepts.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
+                  <option key={dept as string} value={dept as string}>{dept as string}</option>
                 ))}
               </select>
               <span className="text-xs text-slate-500 ml-2">※未設定の既存チームに部署を割り当てることができます。</span>
@@ -195,8 +190,6 @@ export default function TeamModal({ onClose, user, fetchData }: { onClose: () =>
 
         <div className="flex justify-between items-end mb-2">
           <b className="block text-sm">登録済みチーム一覧</b>
-          
-          {/* 管理者向けの一覧絞り込みフィルター */}
           {user.role === '管理者' && (
             <div className="text-xs flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded border border-slate-200">
               <b>表示切替:</b>
@@ -204,7 +197,7 @@ export default function TeamModal({ onClose, user, fetchData }: { onClose: () =>
                 <option value="">(すべて表示)</option>
                 <option value="未設定">未設定(旧データ)</option>
                 {uniqueDepts.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
+                  <option key={dept as string} value={dept as string}>{dept as string}</option>
                 ))}
               </select>
             </div>
