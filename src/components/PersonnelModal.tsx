@@ -16,7 +16,11 @@ export default function PersonnelModal({ onClose, user, fetchData }: { onClose: 
 
   const fetchPersonnel = async () => {
     try {
-      const res = await fetch('/api/personnel');
+      const res = await fetch('api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_personnel' })
+      });
       if (res.ok) {
         const data = await res.json();
         setPersonnel(data);
@@ -37,19 +41,12 @@ export default function PersonnelModal({ onClose, user, fetchData }: { onClose: 
     const saveDept = user.role === '管理者' ? personnelDept : user.department;
 
     try {
-      if (id) {
-        await fetch(`/api/personnel/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, company, name, phone, department: saveDept })
-        });
-      } else {
-        await fetch('/api/personnel', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, company, name, phone, department: saveDept })
-        });
-      }
+      const payload = { action: 'save_personnel', type, company, name, phone, department: saveDept, id };
+      await fetch('api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
       resetForm();
       fetchPersonnel();
       fetchData(); 
@@ -71,7 +68,11 @@ export default function PersonnelModal({ onClose, user, fetchData }: { onClose: 
   const handleDelete = async (deleteId: number) => {
     showConfirm('この名簿データを削除しますか？', async () => {
       try {
-        await fetch(`/api/personnel/${deleteId}`, { method: 'DELETE' });
+        await fetch('api.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete_personnel', id: deleteId })
+        });
         if (id === deleteId) resetForm();
         fetchPersonnel();
         fetchData();
@@ -100,7 +101,6 @@ export default function PersonnelModal({ onClose, user, fetchData }: { onClose: 
       const text = event.target?.result as string;
       const rows = text.split('\n').map(row => row.split(',')).filter(r => r.length >= 4);
       
-      // ★ 案A: アップロードするユーザーの部署を自動的に紐付ける
       const targetDept = user.role === '管理者' ? (filterDept === '未設定' ? '' : filterDept) : user.department;
       
       const payload = rows.map(r => ({
@@ -112,10 +112,10 @@ export default function PersonnelModal({ onClose, user, fetchData }: { onClose: 
       }));
 
       try {
-        const res = await fetch('/api/personnel/import', {
+        const res = await fetch('api.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ action: 'import_personnel', data: payload })
         });
         if (res.ok) {
           showAlert('CSVから名簿を一括登録しました！');
