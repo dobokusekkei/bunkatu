@@ -8,18 +8,26 @@ export default function MainForm({
   personnel, 
   templates, 
   teams,
-  setIsTemplateModalOpen
+  setIsTemplateModalOpen,
+  user
 }: { 
   formData: any, 
   setFormData: any, 
   personnel: any[], 
   templates: any[], 
   teams: any[],
-  setIsTemplateModalOpen: (open: boolean) => void
+  setIsTemplateModalOpen: (open: boolean) => void,
+  user: any
 }) {
   const { showAlert, showConfirm } = useDialog();
   const [workerCols, setWorkerCols] = useState(1);
   
+  // ★ ユーザーの部署に基づいて、選択可能なチームを絞り込む
+  const filteredTeams = teams.filter(t => {
+    if (user.role === '管理者') return true; // 管理者はすべて選択可能
+    return t.department === user.department; // 一般ユーザーは自分の部署のチームのみ
+  });
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     if (type === 'checkbox') {
@@ -29,7 +37,6 @@ export default function MainForm({
       setFormData((prev: any) => {
         const newData = { ...prev, [name]: value };
         
-        // Auto-sync night leader (閉鎖責任者)
         if (name.startsWith('start_') || name.startsWith('our_leader_')) {
           const dayMatch = name.match(/_(\d+)$/);
           if (dayMatch) {
@@ -49,7 +56,6 @@ export default function MainForm({
             }
           }
         }
-        
         return newData;
       });
     }
@@ -161,7 +167,6 @@ export default function MainForm({
       } else if (!start) {
         newData[`our_cl_${day}`] = '';
       }
-      
       return newData;
     });
   };
@@ -181,9 +186,10 @@ export default function MainForm({
             <td className="p-2 border border-slate-300 w-[12%]"><input type="text" name="job_no" value={formData.job_no || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
             <td className="bg-slate-100 p-2 border border-slate-300 w-[8%]">チーム</td>
             <td className="p-2 border border-slate-300 w-[15%]">
+              {/* ★ 絞り込んだチーム(filteredTeams)のみを表示 */}
               <select name="team_id" value={formData.team_id || ''} onChange={handleChange} className="w-full border rounded p-1">
                 <option value="">選択</option>
-                {teams.map(t => <option key={t.id} value={t.id}>{t.team_name}</option>)}
+                {filteredTeams.map(t => <option key={t.id} value={t.id}>{t.team_name}</option>)}
               </select>
             </td>
             <td className="bg-slate-100 p-2 border border-slate-300 w-[12%]">作業場所 (B13)</td>
