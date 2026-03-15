@@ -236,7 +236,12 @@ export default function MainForm({
         <div className="text-xs font-normal flex items-center bg-white text-slate-800 px-2 py-1 rounded">
           <span className="bg-amber-400 text-slate-900 px-1 rounded mr-2 font-bold">自動転記</span>
           📁 夜達CSVを取り込む: 
-          <input type="file" accept=".csv" onChange={handleCsvUpload} className="ml-2 text-xs" />
+          <input 
+            type="file" 
+            accept=".csv" 
+            onChange={handleCsvUpload} 
+            className="ml-2 text-xs file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer border border-slate-200 rounded bg-white" 
+          />
           {formData.yorudatsu_csv_data && <span className="text-emerald-600 font-bold ml-2">✅ 読込済</span>}
         </div>
       </div>
@@ -245,9 +250,9 @@ export default function MainForm({
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border w-[80px]">コピー</th>
-              <th className="p-2 border w-[200px]">作業日時</th>
+              <th className="p-2 border w-[210px]">作業日時</th>
               <th className="p-2 border w-[280px]">時間入力</th>
-              <th className="p-2 border w-[360px]">手配・立会確認</th>
+              <th className="p-2 border w-[345px]">手配・立会確認</th>
               <th className="p-2 border w-[80px]">操作</th>
             </tr>
           </thead>
@@ -262,7 +267,7 @@ export default function MainForm({
                 </td>
                 <td className="p-2 border">
                   <div className="flex items-center justify-center gap-2">
-                    <input type="date" name={`date_${day}`} value={formData[`date_${day}`] || ''} onChange={handleChange} className="border rounded p-1" />
+                    <input type="date" name={`date_${day}`} value={formData[`date_${day}`] || ''} onChange={handleChange} className="border rounded p-1 w-[135px]" />
                     <label className="text-xs cursor-pointer whitespace-nowrap"><input type="checkbox" name={`reserve_${day}`} checked={formData[`reserve_${day}`] || false} onChange={handleChange} /> 予備日</label>
                   </div>
                 </td>
