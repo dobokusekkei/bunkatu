@@ -276,8 +276,9 @@ export default function MainForm({
           {formData.yorudatsu_csv_data && <span className="text-emerald-600 font-bold ml-2">✅ 読込済</span>}
         </div>
       </div>
-      <div className="w-[1050px] overflow-x-auto mb-4 border border-slate-300">
-        <table className="w-max border-collapse bg-white text-sm text-center">
+      <div className="w-[1050px] border border-slate-300 mb-4">
+        {/* ★ w-max をやめ、w-full table-fixed でピクセル幅を完全固定（間延び防止） */}
+        <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>コピー</th>
@@ -340,6 +341,7 @@ export default function MainForm({
         </div>
       </div>
       <div className="w-[1050px] overflow-x-auto mb-4 border border-slate-300">
+        {/* ★ ここだけは枠追加時に水平スクロールさせるため w-max を維持する */}
         <table className="w-max border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
@@ -440,8 +442,9 @@ export default function MainForm({
       <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 w-[1050px]">
         5. 協力業者
       </div>
-      <div className="w-[1050px] overflow-x-auto mb-4 border border-slate-300">
-        <table className="w-max border-collapse bg-white text-sm text-center">
+      <div className="w-[1050px] border border-slate-300 mb-4">
+        {/* ★ w-max をやめ、w-full table-fixed でピクセル幅を完全固定 */}
+        <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>コピー</th>
@@ -511,8 +514,9 @@ export default function MainForm({
       <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 w-[1050px]">
         6. 発注者立会人
       </div>
-      <div className="w-[1050px] overflow-x-auto mb-4 border border-slate-300">
-        <table className="w-max border-collapse bg-white text-sm text-center">
+      <div className="w-[1050px] border border-slate-300 mb-4">
+        {/* ★ w-max をやめ、w-full table-fixed でピクセル幅を完全固定 */}
+        <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>コピー</th>
