@@ -246,7 +246,8 @@ export default function App() {
               user={user} 
             />
             
-            <div className="mt-8 pt-6 border-t border-slate-200 flex justify-center">
+            {/* ★ mt-8 pt-6 から mt-4 pt-4 に減らし、ボタン上の間延びを解消 */}
+            <div className="mt-4 pt-4 border-t border-slate-200 flex justify-center">
               <button 
                 onClick={handleExportPlan} 
                 className="inline-flex items-center justify-center gap-2 px-10 py-3 bg-[#217346] text-white rounded-lg hover:bg-[#1e6b3e] font-bold text-lg shadow-md transition-colors"
