@@ -22,13 +22,12 @@ export default function MainForm({
   const { showAlert, showConfirm } = useDialog();
   const [workerCols, setWorkerCols] = useState(1);
 
-  // ★ 入力中の変換用（全角英数と各種ハイフンを半角に）
-  const toHalfWidth = (str: string) => {
+  const sanitizeAlphanumericAndSymbols = (str: string) => {
     if (!str) return '';
     let halfVal = str.replace(/[！-～]/g, function(s) {
       return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
     });
-    return halfVal.replace(/[ー－―−]/g, '-');
+    return halfVal.replace(/[^\x20-\x7E]/g, '');
   };
 
   const targetNames = [
@@ -52,8 +51,7 @@ export default function MainForm({
         return pattern.test(name);
       });
 
-      // IME保護のため、ここでは半角変換のみ行い、非ASCII文字の強制削除はしない
-      if (isTarget) finalValue = toHalfWidth(value);
+      if (isTarget) finalValue = sanitizeAlphanumericAndSymbols(value);
 
       setFormData((prev: any) => {
         const newData = { ...prev, [name]: finalValue };
@@ -82,7 +80,6 @@ export default function MainForm({
     }
   };
 
-  // ★ 入力完了（フォーカスが外れた）時に、残った日本語などの全角文字を完全削除する
   const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     const isTarget = targetNames.some(pattern => {
@@ -221,7 +218,6 @@ export default function MainForm({
   const days = [1, 2, 3, 4, 5];
 
   return (
-    {/* ★ pb-8 を pb-2 に減らし、フォーム全体の底の余白を削減 */}
     <div className="max-w-[1050px] mx-auto pb-2">
       {/* 1. 基本情報 */}
       <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 flex justify-between items-center w-[1050px]">
@@ -231,9 +227,7 @@ export default function MainForm({
         <tbody>
           <tr>
             <td className="bg-slate-100 p-2 border border-slate-300 w-[120px]">工番 (L12)</td>
-            <td className="p-2 border border-slate-300 w-[200px]">
-              <input type="text" name="job_no" inputMode="url" value={formData.job_no || ''} onChange={handleChange} onBlur={handleBlur} className="w-full border rounded p-1" />
-            </td>
+            <td className="p-2 border border-slate-300 w-[200px]"><input type="text" name="job_no" inputMode="url" value={formData.job_no || ''} onChange={handleChange} onBlur={handleBlur} className="w-full border rounded p-1" /></td>
             <td className="bg-slate-100 p-2 border border-slate-300 w-[100px]">チーム</td>
             <td className="p-2 border border-slate-300 w-[200px]">
               <select name="team_id" value={formData.team_id || ''} onChange={handleChange} className="w-full border rounded p-1">
