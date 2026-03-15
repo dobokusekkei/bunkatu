@@ -276,33 +276,34 @@ export default function MainForm({
           {formData.yorudatsu_csv_data && <span className="text-emerald-600 font-bold ml-2">✅ 読込済</span>}
         </div>
       </div>
-      <div className="w-[1050px] border border-slate-300 mb-4">
+      {/* ★ border 指定を外して、1050pxの空間をフルに使う */}
+      <div className="w-[1050px] mb-4">
         <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
-              <th className="p-2 border" style={{ width: '80px' }}>コピー</th>
-              <th className="p-2 border" style={{ width: '215px' }}>作業日時</th>
-              <th className="p-2 border" style={{ width: '300px' }}>時間入力</th>
-              <th className="p-2 border" style={{ width: '375px' }}>手配・立会確認</th>
-              <th className="p-2 border" style={{ width: '80px' }}>操作</th>
+              <th className="p-2 border border-slate-300" style={{ width: '80px' }}>コピー</th>
+              <th className="p-2 border border-slate-300" style={{ width: '215px' }}>作業日時</th>
+              <th className="p-2 border border-slate-300" style={{ width: '300px' }}>時間入力</th>
+              <th className="p-2 border border-slate-300" style={{ width: '375px' }}>手配・立会確認</th>
+              <th className="p-2 border border-slate-300" style={{ width: '80px' }}>操作</th>
             </tr>
           </thead>
           <tbody>
             {days.map(day => (
               <tr key={`day-${day}`}>
-                <td className="p-2 border bg-amber-200 cursor-grab border-r-4 border-r-slate-300 text-center whitespace-nowrap" draggable onDragStart={(e) => handleDragStart(e, day)} onDrop={(e) => handleDrop(e, day)} onDragOver={handleDragOver}>
+                <td className="p-2 border border-slate-300 bg-amber-200 cursor-grab border-r-4 text-center whitespace-nowrap" draggable onDragStart={(e) => handleDragStart(e, day)} onDrop={(e) => handleDrop(e, day)} onDragOver={handleDragOver}>
                   <div className="flex items-center justify-center gap-1">
                     <span className="text-xs font-bold">{day}日目</span>
                     <span className="text-[10px] text-slate-600">≡掴む≡</span>
                   </div>
                 </td>
-                <td className="p-2 border">
+                <td className="p-2 border border-slate-300">
                   <div className="flex items-center justify-center gap-2">
                     <input type="date" name={`date_${day}`} value={formData[`date_${day}`] || ''} onChange={handleChange} className="border rounded p-1 w-[135px]" />
                     <label className="text-xs cursor-pointer whitespace-nowrap"><input type="checkbox" name={`reserve_${day}`} checked={formData[`reserve_${day}`] || false} onChange={handleChange} /> 予備日</label>
                   </div>
                 </td>
-                <td className="p-2 border">
+                <td className="p-2 border border-slate-300">
                   <div className="flex items-center justify-center gap-1">
                     <button type="button" onClick={() => setTime('09:00', '17:00', day)} className="bg-amber-400 px-2 py-1 rounded text-xs font-bold">昼</button>
                     <button type="button" onClick={() => setTime('00:00', '05:00', day)} className="bg-slate-600 text-white px-2 py-1 rounded text-xs font-bold">夜</button>
@@ -311,7 +312,7 @@ export default function MainForm({
                     <input type="time" name={`end_${day}`} value={formData[`end_${day}`] || ''} onChange={handleChange} className="border rounded p-1 w-[90px]" />
                   </div>
                 </td>
-                <td className="p-2 border text-left">
+                <td className="p-2 border border-slate-300 text-left">
                   <div className="flex flex-wrap gap-2 w-full justify-center">
                     <label className="text-xs cursor-pointer w-[75px]"><input type="checkbox" name={`chk_kido_${day}`} checked={formData[`chk_kido_${day}`] || false} onChange={handleChange} /> 軌道立会</label>
                     <label className="text-xs cursor-pointer w-[75px]"><input type="checkbox" name={`chk_denki_${day}`} checked={formData[`chk_denki_${day}`] || false} onChange={handleChange} /> 電気立会</label>
@@ -322,7 +323,7 @@ export default function MainForm({
                     <label className="text-xs cursor-pointer w-[75px]"><input type="checkbox" name={`chk_ryuchi_${day}`} checked={formData[`chk_ryuchi_${day}`] || false} onChange={handleChange} /> 留置変更</label>
                   </div>
                 </td>
-                <td className="p-2 border text-center">
+                <td className="p-2 border border-slate-300 text-center">
                   <button type="button" onClick={() => clearDay(day)} className="border border-rose-500 text-rose-500 px-3 py-1 rounded text-xs hover:bg-rose-500 hover:text-white whitespace-nowrap">クリア</button>
                 </td>
               </tr>
@@ -339,25 +340,25 @@ export default function MainForm({
           {workerCols > 1 && <button type="button" onClick={() => setWorkerCols(prev => prev - 1)} className="bg-rose-500 text-white px-2 py-1 rounded text-xs font-bold">－ 枠を減らす</button>}
         </div>
       </div>
-      <div className="w-[1050px] overflow-x-auto mb-4 border border-slate-300">
-        {/* ★ widthを計算して動的にピクセル指定し、table-fixedで絶対固定する */}
+      {/* ★ border 指定を外してフルに使い、追加時は水平スクロール */}
+      <div className="w-[1050px] overflow-x-auto mb-4">
         <table 
           className="table-fixed border-collapse bg-white text-sm text-center"
           style={{ width: `${1050 + (workerCols - 1) * 150}px` }}
         >
           <thead>
             <tr className="bg-slate-100">
-              <th className="p-2 border" style={{ width: '80px' }}>コピー</th>
-              <th className="p-2 border" style={{ width: '150px' }}>当社 指揮者</th>
-              <th className="p-2 border" style={{ width: '150px' }}>携帯番号</th>
-              <th className="p-2 border" style={{ width: '150px' }}>作業員1</th>
-              {workerCols >= 2 && <th className="p-2 border" style={{ width: '150px' }}>作業員2</th>}
-              {workerCols >= 3 && <th className="p-2 border" style={{ width: '150px' }}>作業員3</th>}
-              {workerCols >= 4 && <th className="p-2 border" style={{ width: '150px' }}>作業員4</th>}
-              <th className="p-2 border" style={{ width: '150px' }}>閉鎖責任者</th>
-              <th className="p-2 border" style={{ width: '145px' }}>監視員1</th>
-              <th className="p-2 border" style={{ width: '145px' }}>監視員2</th>
-              <th className="p-2 border" style={{ width: '80px' }}>操作</th>
+              <th className="p-2 border border-slate-300" style={{ width: '80px' }}>コピー</th>
+              <th className="p-2 border border-slate-300" style={{ width: '150px' }}>当社 指揮者</th>
+              <th className="p-2 border border-slate-300" style={{ width: '150px' }}>携帯番号</th>
+              <th className="p-2 border border-slate-300" style={{ width: '150px' }}>作業員1</th>
+              {workerCols >= 2 && <th className="p-2 border border-slate-300" style={{ width: '150px' }}>作業員2</th>}
+              {workerCols >= 3 && <th className="p-2 border border-slate-300" style={{ width: '150px' }}>作業員3</th>}
+              {workerCols >= 4 && <th className="p-2 border border-slate-300" style={{ width: '150px' }}>作業員4</th>}
+              <th className="p-2 border border-slate-300" style={{ width: '150px' }}>閉鎖責任者</th>
+              <th className="p-2 border border-slate-300" style={{ width: '145px' }}>監視員1</th>
+              <th className="p-2 border border-slate-300" style={{ width: '145px' }}>監視員2</th>
+              <th className="p-2 border border-slate-300" style={{ width: '80px' }}>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -375,62 +376,62 @@ export default function MainForm({
 
               return (
                 <tr key={`our-${day}`}>
-                  <td className="p-2 border bg-amber-200 cursor-grab border-r-4 border-r-slate-300 text-center whitespace-nowrap" draggable onDragStart={(e) => handleDragStart(e, day)} onDrop={(e) => handleDrop(e, day)} onDragOver={handleDragOver}>
+                  <td className="p-2 border border-slate-300 bg-amber-200 cursor-grab border-r-4 text-center whitespace-nowrap" draggable onDragStart={(e) => handleDragStart(e, day)} onDrop={(e) => handleDrop(e, day)} onDragOver={handleDragOver}>
                     <div className="flex items-center justify-center gap-1">
                       <span className="text-xs font-bold">{day}日目</span>
                       <span className="text-[10px] text-slate-600">≡掴む≡</span>
                     </div>
                   </td>
-                  <td className="p-2 border">
+                  <td className="p-2 border border-slate-300">
                     <select name={`our_leader_${day}`} value={formData[`our_leader_${day}`] || ''} onChange={handleLeaderChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
                       {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>
-                  <td className="p-2 border"><input type="text" name={`our_phone_${day}`} value={formData[`our_phone_${day}`] || ''} readOnly className="w-full border rounded p-1 bg-slate-100" /></td>
-                  <td className="p-2 border">
+                  <td className="p-2 border border-slate-300"><input type="text" name={`our_phone_${day}`} value={formData[`our_phone_${day}`] || ''} readOnly className="w-full border rounded p-1 bg-slate-100" /></td>
+                  <td className="p-2 border border-slate-300">
                     <select name={`our_w1_${day}`} value={formData[`our_w1_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
                       {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>
-                  {workerCols >= 2 && <td className="p-2 border">
+                  {workerCols >= 2 && <td className="p-2 border border-slate-300">
                     <select name={`our_w2_${day}`} value={formData[`our_w2_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
                       {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>}
-                  {workerCols >= 3 && <td className="p-2 border">
+                  {workerCols >= 3 && <td className="p-2 border border-slate-300">
                     <select name={`our_w3_${day}`} value={formData[`our_w3_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
                       {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>}
-                  {workerCols >= 4 && <td className="p-2 border">
+                  {workerCols >= 4 && <td className="p-2 border border-slate-300">
                     <select name={`our_w4_${day}`} value={formData[`our_w4_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
                       {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>}
-                  <td className="p-2 border">
+                  <td className="p-2 border border-slate-300">
                     <select name={`our_cl_${day}`} value={formData[`our_cl_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
                       {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>
-                  <td className="p-2 border">
+                  <td className="p-2 border border-slate-300">
                     <select name={`our_g1_${day}`} value={formData[`our_g1_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
                       {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>
-                  <td className="p-2 border">
+                  <td className="p-2 border border-slate-300">
                     <select name={`our_g2_${day}`} value={formData[`our_g2_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
                       {filteredPersonnel.filter(p => p.type === 'our').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>
-                  <td className="p-2 border text-center">
+                  <td className="p-2 border border-slate-300 text-center">
                     <button type="button" onClick={() => clearDay(day)} className="border border-rose-500 text-rose-500 px-3 py-1 rounded text-xs hover:bg-rose-500 hover:text-white whitespace-nowrap">クリア</button>
                   </td>
                 </tr>
@@ -444,19 +445,20 @@ export default function MainForm({
       <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 w-[1050px]">
         5. 協力業者
       </div>
-      <div className="w-[1050px] border border-slate-300 mb-4">
+      {/* ★ border 指定を外して、1050pxの空間をフルに使う */}
+      <div className="w-[1050px] mb-4">
         <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
-              <th className="p-2 border" style={{ width: '80px' }}>コピー</th>
-              <th className="p-2 border" style={{ width: '350px' }}>協力業者 業者名</th>
-              <th className="p-2 border" style={{ width: '150px' }}>協力業者 責任者</th>
-              <th className="p-2 border" style={{ width: '150px' }}>携帯番号</th>
-              <th className="p-2 border" style={{ width: '60px' }}>従事者</th>
-              <th className="p-2 border" style={{ width: '60px' }}>監視員</th>
-              <th className="p-2 border" style={{ width: '60px' }}>誘導員</th>
-              <th className="p-2 border" style={{ width: '60px' }}>その他</th>
-              <th className="p-2 border" style={{ width: '80px' }}>操作</th>
+              <th className="p-2 border border-slate-300" style={{ width: '80px' }}>コピー</th>
+              <th className="p-2 border border-slate-300" style={{ width: '350px' }}>協力業者 業者名</th>
+              <th className="p-2 border border-slate-300" style={{ width: '150px' }}>協力業者 責任者</th>
+              <th className="p-2 border border-slate-300" style={{ width: '150px' }}>携帯番号</th>
+              <th className="p-2 border border-slate-300" style={{ width: '60px' }}>従事者</th>
+              <th className="p-2 border border-slate-300" style={{ width: '60px' }}>監視員</th>
+              <th className="p-2 border border-slate-300" style={{ width: '60px' }}>誘導員</th>
+              <th className="p-2 border border-slate-300" style={{ width: '60px' }}>その他</th>
+              <th className="p-2 border border-slate-300" style={{ width: '80px' }}>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -478,30 +480,30 @@ export default function MainForm({
 
               return (
                 <tr key={`part-${day}`}>
-                  <td className="p-2 border bg-amber-200 cursor-grab border-r-4 border-r-slate-300 text-center whitespace-nowrap" draggable onDragStart={(e) => handleDragStart(e, day)} onDrop={(e) => handleDrop(e, day)} onDragOver={handleDragOver}>
+                  <td className="p-2 border border-slate-300 bg-amber-200 cursor-grab border-r-4 text-center whitespace-nowrap" draggable onDragStart={(e) => handleDragStart(e, day)} onDrop={(e) => handleDrop(e, day)} onDragOver={handleDragOver}>
                     <div className="flex items-center justify-center gap-1">
                       <span className="text-xs font-bold">{day}日目</span>
                       <span className="text-[10px] text-slate-600">≡掴む≡</span>
                     </div>
                   </td>
-                  <td className="p-2 border">
+                  <td className="p-2 border border-slate-300">
                     <select name={`part_name_${day}`} value={formData[`part_name_${day}`] || ''} onChange={(e) => { handleChange(e); setFormData((prev: any) => ({ ...prev, [`part_leader_${day}`]: '', [`part_phone_${day}`]: '' })); }} className="w-full border rounded p-1">
                       <option value="">選択</option>
                       {companies.map((c, i) => <option key={i} value={c as string}>{c as string}</option>)}
                     </select>
                   </td>
-                  <td className="p-2 border">
+                  <td className="p-2 border border-slate-300">
                     <select name={`part_leader_${day}`} value={formData[`part_leader_${day}`] || ''} onChange={handleLeaderChange} className="w-full border rounded p-1">
                       <option value="">選択</option>
                       {leaders.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                     </select>
                   </td>
-                  <td className="p-2 border"><input type="text" name={`part_phone_${day}`} value={formData[`part_phone_${day}`] || ''} readOnly className="w-full border rounded p-1 bg-slate-100" /></td>
-                  <td className="p-2 border"><input type="text" inputMode="url" name={`part_count_${day}`} value={formData[`part_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-                  <td className="p-2 border"><input type="text" inputMode="url" name={`part_g_count_${day}`} value={formData[`part_g_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-                  <td className="p-2 border"><input type="text" inputMode="url" name={`part_t_count_${day}`} value={formData[`part_t_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-                  <td className="p-2 border"><input type="text" inputMode="url" name={`part_other_${day}`} value={formData[`part_other_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-                  <td className="p-2 border text-center">
+                  <td className="p-2 border border-slate-300"><input type="text" name={`part_phone_${day}`} value={formData[`part_phone_${day}`] || ''} readOnly className="w-full border rounded p-1 bg-slate-100" /></td>
+                  <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`part_count_${day}`} value={formData[`part_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                  <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`part_g_count_${day}`} value={formData[`part_g_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                  <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`part_t_count_${day}`} value={formData[`part_t_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                  <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`part_other_${day}`} value={formData[`part_other_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                  <td className="p-2 border border-slate-300 text-center">
                     <button type="button" onClick={() => clearDay(day)} className="border border-rose-500 text-rose-500 px-3 py-1 rounded text-xs hover:bg-rose-500 hover:text-white whitespace-nowrap">クリア</button>
                   </td>
                 </tr>
@@ -515,28 +517,29 @@ export default function MainForm({
       <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 w-[1050px]">
         6. 発注者立会人
       </div>
-      <div className="w-[1050px] border border-slate-300 mb-4">
+      {/* ★ border 指定を外して、1050pxの空間をフルに使う */}
+      <div className="w-[1050px] mb-4">
         <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
-              <th className="p-2 border" style={{ width: '80px' }}>コピー</th>
-              <th className="p-2 border" style={{ width: '100px' }}>人数 (C列)</th>
-              <th className="p-2 border" style={{ width: '790px' }}>所属部署・氏名 (D列)</th>
-              <th className="p-2 border" style={{ width: '80px' }}>操作</th>
+              <th className="p-2 border border-slate-300" style={{ width: '80px' }}>コピー</th>
+              <th className="p-2 border border-slate-300" style={{ width: '100px' }}>人数 (C列)</th>
+              <th className="p-2 border border-slate-300" style={{ width: '790px' }}>所属部署・氏名 (D列)</th>
+              <th className="p-2 border border-slate-300" style={{ width: '80px' }}>操作</th>
             </tr>
           </thead>
           <tbody>
             {days.map(day => (
               <tr key={`client-${day}`}>
-                <td className="p-2 border bg-amber-200 cursor-grab border-r-4 border-r-slate-300 text-center whitespace-nowrap" draggable onDragStart={(e) => handleDragStart(e, day)} onDrop={(e) => handleDrop(e, day)} onDragOver={handleDragOver}>
+                <td className="p-2 border border-slate-300 bg-amber-200 cursor-grab border-r-4 text-center whitespace-nowrap" draggable onDragStart={(e) => handleDragStart(e, day)} onDrop={(e) => handleDrop(e, day)} onDragOver={handleDragOver}>
                   <div className="flex items-center justify-center gap-1">
                     <span className="text-xs font-bold">{day}日目</span>
                     <span className="text-[10px] text-slate-600">≡掴む≡</span>
                   </div>
                 </td>
-                <td className="p-2 border"><input type="text" inputMode="url" name={`client_num_${day}`} value={formData[`client_num_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-                <td className="p-2 border"><input type="text" name={`client_name_${day}`} value={formData[`client_name_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-                <td className="p-2 border text-center">
+                <td className="p-2 border border-slate-300"><input type="text" inputMode="url" name={`client_num_${day}`} value={formData[`client_num_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                <td className="p-2 border border-slate-300"><input type="text" name={`client_name_${day}`} value={formData[`client_name_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                <td className="p-2 border border-slate-300 text-center">
                   <button type="button" onClick={() => clearDay(day)} className="border border-rose-500 text-rose-500 px-3 py-1 rounded text-xs hover:bg-rose-500 hover:text-white whitespace-nowrap">クリア</button>
                 </td>
               </tr>
