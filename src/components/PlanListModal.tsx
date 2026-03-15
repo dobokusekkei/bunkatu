@@ -19,6 +19,7 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedChecks, setSelectedChecks] = useState<string[]>([]);
 
+  // 初期状態の期間設定（先月1日〜来月末日）
   const setDefaultDateRange = () => {
     const now = new Date();
     const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -105,8 +106,10 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
       const createdAtRaw = p.created_at ? p.created_at.split(' ')[0] : '';
 
       let dates = [];
+      let rawDates: string[] = []; // 作業日の検索用配列 (YYYY-MM-DD)
       for (let i = 1; i <= 5; i++) {
         if (parsed[`date_${i}`]) {
+          rawDates.push(parsed[`date_${i}`]);
           const d = parsed[`date_${i}`].split('-');
           dates.push(`${parseInt(d[1])}/${parseInt(d[2])}`);
         }
@@ -146,12 +149,22 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
         checksStr,
         checksArray,
         datesStr,
+        rawDates,
         partsStr,
         searchText
       };
     }).filter(p => {
-      if (fromDate && p.createdAt < fromDate) return false;
-      if (toDate && p.createdAt > toDate) return false;
+      // ★ 検索対象を「登録日」から「作業日 (1日目〜5日目)」に変更
+      if (fromDate || toDate) {
+        if (p.rawDates.length === 0) return false; // 作業日が1日も登録されていないデータは弾く
+        const hasMatchingDate = p.rawDates.some(d => {
+          if (fromDate && d < fromDate) return false;
+          if (toDate && d > toDate) return false;
+          return true; // 1日でも期間内に収まっていればOK
+        });
+        if (!hasMatchingDate) return false;
+      }
+
       for (let k of keywords) {
         if (!p.searchText.includes(k)) return false;
       }
@@ -179,11 +192,13 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
           <div className="bg-[#f1f8ff] p-4 rounded-lg mb-4 border border-[#cce5ff] text-[13px]">
             <div className="flex flex-wrap gap-4 items-center mb-3">
               <div>
-                <b className="text-[#005a9e] mr-2">📅 登録日:</b>
+                <b className="text-[#005a9e] mr-2">📅 作業日:</b>
                 <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="border rounded px-2 py-1" />
                 <span className="mx-2">～</span>
                 <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="border rounded px-2 py-1" />
-                <button onClick={() => {setFromDate(''); setToDate('');}} className="ml-2 px-2 py-1 bg-slate-400 text-white rounded text-xs hover:bg-slate-500">クリア</button>
+                {/* ★ すべての期間 と 当月前後 のワンクリックボタンを追加 */}
+                <button onClick={() => {setFromDate(''); setToDate('');}} className="ml-2 px-2 py-1 bg-slate-500 text-white rounded text-xs hover:bg-slate-600 font-bold transition-colors">すべての期間</button>
+                <button onClick={setDefaultDateRange} className="ml-1 px-2 py-1 bg-indigo-500 text-white rounded text-xs hover:bg-indigo-600 font-bold transition-colors">当月前後</button>
               </div>
               <div>
                 <b className="text-[#005a9e] mr-2">🔍 キーワード (複数AND検索):</b>
@@ -247,7 +262,7 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
                   <th className="border border-slate-300 p-2 w-[14%]">作業場所</th>
                   <th className="border border-slate-300 p-2 w-[16%]">工事内容</th>
                   <th className="border border-slate-300 p-2 w-[9%]">手配・立会</th>
-                  <th className="border border-slate-300 p-2 w-[10%]">作業日時</th>
+                  <th className="border border-slate-300 p-2 w-[10%] text-indigo-700">作業日時</th>
                   <th className="border border-slate-300 p-2 w-[10%]">外注業者</th>
                   <th className="border border-slate-300 p-2 w-[90px]">操作</th>
                 </tr>
@@ -255,7 +270,7 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
               <tbody>
                 {filteredPlans.map(p => (
                   <tr key={p.id} className="border-b border-slate-200 hover:bg-indigo-50/30">
-                    <td className="border border-slate-300 p-2 text-center">{p.createdAt}</td>
+                    <td className="border border-slate-300 p-2 text-center text-slate-500">{p.createdAt}</td>
                     <td className="border border-slate-300 p-2">{p.creatorDept}</td>
                     <td className="border border-slate-300 p-2">{p.creatorName}</td>
                     <td className="border border-slate-300 p-2">{p.jobNo}</td>
@@ -263,7 +278,7 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
                     <td className="border border-slate-300 p-2">{p.loc}</td>
                     <td className="border border-slate-300 p-2">{p.content}</td>
                     <td className="border border-slate-300 p-2 text-red-600 font-bold text-[11px] leading-tight">{p.checksStr}</td>
-                    <td className="border border-slate-300 p-2 font-bold">{p.datesStr}</td>
+                    <td className="border border-slate-300 p-2 font-bold text-indigo-700">{p.datesStr}</td>
                     <td className="border border-slate-300 p-2">{p.partsStr}</td>
                     <td className="border border-slate-300 p-2">
                       <div className="flex flex-col gap-1">
@@ -279,7 +294,7 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
                 ))}
                 {filteredPlans.length === 0 && (
                   <tr>
-                    <td colSpan={11} className="p-8 text-center text-slate-500">条件に一致するデータが見つかりません。</td>
+                    <td colSpan={11} className="p-8 text-center text-slate-500 font-bold">条件に一致するデータが見つかりません。</td>
                   </tr>
                 )}
               </tbody>
