@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDialog } from './DialogContext';
 
 export default function GaigyoModal({ onClose }: { onClose: () => void }) {
   const { showAlert } = useDialog();
   const [rows, setRows] = useState<any[]>([]);
-  const tableRef = useRef<HTMLTableElement>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchGaigyoData = async () => {
       try {
         const res = await fetch('/api/plans/all');
         const data = await res.json();
@@ -21,80 +20,84 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
           const location = parsed.location || '';
           
           let yorudatsuData: any[] = [];
-          if(parsed.yorudatsu_csv_data) {
+          if (parsed.yorudatsu_csv_data) {
             try { yorudatsuData = JSON.parse(parsed.yorudatsu_csv_data); } catch(e) {}
           }
 
-          for(let i=1; i<=5; i++) {
-            const rawDate = parsed[`date_${i}`];
-            if(!rawDate) continue;
+          for (let i = 1; i <= 5; i++) {
+            const rawDate = parsed['date_'+i];
+            if (!rawDate) continue;
             
-            const reserve = parsed[`reserve_${i}`] ? ' （予備日）' : '';
+            const reserve = parsed['reserve_'+i] ? ' （予備日）' : '';
             const gyomuName = jobContent + reserve;
             
-            const leader = parsed[`our_leader_${i}`] || '';
-            const phone = parsed[`our_phone_${i}`] || '';
+            const leader = parsed['our_leader_'+i] || '';
+            const phone = parsed['our_phone_'+i] || '';
             
             let workers = [];
-            for(let w=1; w<=4; w++) {
-              if(parsed[`our_w${w}_${i}`]) workers.push(parsed[`our_w${w}_${i}`]);
+            for (let w = 1; w <= 4; w++) {
+              if (parsed['our_w'+w+'_'+i]) workers.push(parsed['our_w'+w+'_'+i]);
             }
             const workerStr = workers.join(', ');
             
-            const start = parsed[`start_${i}`] || '';
-            const end = parsed[`end_${i}`] || '';
+            const start = parsed['start_'+i] || '';
+            const end = parsed['end_'+i] || '';
             let dayNight = '';
-            if(start) {
+            if (start) {
               const h = parseInt(start.split(':')[0], 10);
               dayNight = (h >= 6 && h < 18) ? '昼' : '夜';
             }
-            
-            const formatTime = (t: string) => {
-              if(!t) return '';
-              let parts = t.split(':');
-              if(parts.length === 2) return parseInt(parts[0], 10) + ':' + parts[1];
-              return t;
-            };
+            const formatTime = (t: string) => t ? parseInt(t.split(':')[0], 10) + ':' + t.split(':')[1] : '';
             const timeStr = (start || end) ? `${formatTime(start)}～${formatTime(end)}` : '';
             
             let yoruNo = '';
-            const ourCl = parsed[`our_cl_${i}`] || '';
-            if(ourCl && yorudatsuData.length > 0) {
+            const ourCl = parsed['our_cl_'+i] || '';
+            if (ourCl && yorudatsuData.length > 0) {
               const targetDate = new Date(rawDate).toISOString().split('T')[0];
               const targetName = ourCl.replace(/[\s　]/g, '');
-              for(let r of yorudatsuData) {
-                if(r.length > 28 && r[0].trim() !== '') {
+              
+              for (let r of yorudatsuData) {
+                if (r.length > 28 && r[0].trim() !== '') {
                   let cDateStr = r[0].trim().replace(/\//g, '-');
                   let dParts = cDateStr.split('-');
-                  if(dParts.length === 3) cDateStr = `${dParts[0]}-${dParts[1].padStart(2,'0')}-${dParts[2].padStart(2,'0')}`;
+                  if (dParts.length === 3) cDateStr = `${dParts[0]}-${dParts[1].padStart(2,'0')}-${dParts[2].padStart(2,'0')}`;
                   const cName = r[8] ? r[8].replace(/[\s　]/g, '') : '';
-                  if(targetDate === cDateStr && targetName === cName) { yoruNo = r[2] ? r[2].trim() : ''; break; }
+                  
+                  if (targetDate === cDateStr && targetName === cName) { 
+                    yoruNo = r[2] ? r[2].trim() : ''; 
+                    break; 
+                  }
                 } else if (r.length === 8 && r[0].trim() !== '') {
                   let cDateStr = r[0].trim().replace(/\//g, '-');
                   let dParts = cDateStr.split('-');
-                  if(dParts.length === 3) cDateStr = `${dParts[0]}-${dParts[1].padStart(2,'0')}-${dParts[2].padStart(2,'0')}`;
+                  if (dParts.length === 3) cDateStr = `${dParts[0]}-${dParts[1].padStart(2,'0')}-${dParts[2].padStart(2,'0')}`;
                   const cName = r[2] ? r[2].replace(/[\s　]/g, '') : '';
-                  if(targetDate === cDateStr && targetName === cName) { yoruNo = r[1] ? r[1].trim() : ''; break; }
+                  
+                  if (targetDate === cDateStr && targetName === cName) { 
+                    yoruNo = r[1] ? r[1].trim() : ''; 
+                    break; 
+                  }
                 }
               }
             }
             
             if (yoruNo) {
               let numMatch = yoruNo.match(/\d+/);
-              if (numMatch) { yoruNo = yoruNo.replace(numMatch[0], String(parseInt(numMatch[0], 10)).padStart(3, '0')); }
+              if (numMatch) {
+                yoruNo = yoruNo.replace(numMatch[0], String(parseInt(numMatch[0], 10)).padStart(3, '0'));
+              }
             }
             
-            const isRyuchi = parsed[`chk_ryuchi_${i}`] ? '留置変更あり' : '';
-            const partName = parsed[`part_name_${i}`] || '';
-            const partLeader = parsed[`part_leader_${i}`] || '';
-            const partPhone = parsed[`part_phone_${i}`] || '';
-            const partCount = parsed[`part_count_${i}`] || '';
-            const partGCount = parsed[`part_g_count_${i}`] || '';
-            const partTCount = parsed[`part_t_count_${i}`] || '';
-            const partOther = parsed[`part_other_${i}`] || '';
+            const isRyuchi = parsed['chk_ryuchi_'+i] ? 'あり' : '';
+            const partName = parsed['part_name_'+i] || '';
+            const partLeader = parsed['part_leader_'+i] || '';
+            const partPhone = parsed['part_phone_'+i] || '';
+            const partCount = parsed['part_count_'+i] || '';
+            const partGCount = parsed['part_g_count_'+i] || '';
+            const partTCount = parsed['part_t_count_'+i] || '';
+            const partOther = parsed['part_other_'+i] || '';
 
             newRows.push({
-              id: `${p.id}-${i}`,
               rawDate, gyomuName, leader, phone, workerStr,
               dayNight, timeStr, yoruNo, isRyuchi, location,
               partName, partLeader, partPhone, partCount,
@@ -107,42 +110,43 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
         setRows(newRows);
       } catch (error) {
         console.error(error);
-        showAlert('データの取得に失敗しました。');
+        showAlert('外業管理表データの生成に失敗しました。');
       }
     };
-
-    fetchData();
+    
+    fetchGaigyoData();
   }, []);
 
-  const handleExport = async () => {
-    if (!tableRef.current) return;
-    
-    const exportData = [];
-    const trs = tableRef.current.querySelectorAll('tbody tr');
-    trs.forEach(tr => {
-      const rowData: string[] = [];
-      const tds = tr.querySelectorAll('td');
-      tds.forEach((td, idx) => {
-        const input = td.querySelector('input');
-        if (input) {
-          rowData.push(input.value);
-        } else if (idx === 3) {
-          // 業務名 (remove html tags if any)
-          rowData.push(td.innerText.replace(/\n/g, ' ').trim());
-        } else {
-          rowData.push(td.innerText.replace(/\n/g, ' ').trim());
-        }
-      });
-      exportData.push(rowData);
-    });
-
+  const exportGaigyoExcel = async () => {
     try {
+      const exportData = rows.map(r => [
+        '', // Noはサーバー側で振るか無視する
+        r.rawDate,
+        '', // 曜日
+        r.gyomuName,
+        r.leader,
+        r.phone,
+        r.workerStr,
+        r.dayNight,
+        r.timeStr,
+        r.yoruNo,
+        r.isRyuchi,
+        r.location,
+        r.partName,
+        r.partLeader,
+        r.partPhone,
+        r.partCount,
+        r.partGCount,
+        r.partTCount,
+        r.partOther
+      ]);
+
       const res = await fetch('/api/export/gaigyo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gaigyo_data: exportData })
+        body: JSON.stringify(exportData)
       });
-      
+
       if (res.ok) {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
@@ -154,55 +158,62 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
         a.remove();
         window.URL.revokeObjectURL(url);
       } else {
-        showAlert('Excel出力に失敗しました。');
+        showAlert('【テスト環境】Excel出力シミュレーション（※Vercel上では出力されません）');
       }
     } catch (error) {
-      console.error(error);
-      showAlert('Excel出力エラー');
+      showAlert('【テスト環境】Excel出力シミュレーション（※Vercel上では出力されません）');
     }
   };
 
   const dayOfWeekStr = ['日', '月', '火', '水', '木', '金', '土'];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 print:relative print:block print:bg-transparent print:z-auto">
-      <div className="bg-white rounded-xl shadow-xl w-[98%] max-w-[1800px] max-h-[95vh] overflow-hidden flex flex-col p-6 print:shadow-none print:border-none print:w-full print:max-h-none print:p-0 print:m-0">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 print:p-0 print:bg-white">
+      {/* ★ 印刷時に表示領域を制御するためのID (gaigyo-print-area) を付与 */}
+      <div id="gaigyo-print-area" className="bg-white rounded-xl shadow-xl w-full max-w-[1800px] max-h-[95vh] flex flex-col print:shadow-none print:max-h-none print:w-full">
         
-        <div className="flex justify-between items-center border-b-2 border-slate-300 pb-2 mb-4 print:hidden">
-          <h3 className="text-xl font-bold m-0 flex items-center gap-2">
-            📋 外業管理表 
-            <span className="text-sm text-slate-500 font-normal">(※テキストボックスは自由に追記できます)</span>
+        {/* ★ 印刷時にボタン類を隠す (print:hidden) */}
+        <div className="flex justify-between items-center p-4 border-b border-slate-200 print:hidden">
+          <h3 className="text-xl font-bold text-slate-800 m-0 flex items-center gap-2">
+            📋 外業管理表
+            <small className="text-slate-500 font-normal text-sm ml-2">(※テキストボックスは自由に追記できます)</small>
           </h3>
           <div className="flex gap-2">
-            <button onClick={() => window.print()} className="bg-slate-500 text-white px-4 py-1.5 rounded text-sm hover:bg-slate-600">🖨️ 印刷する</button>
-            <button onClick={handleExport} className="bg-emerald-600 text-white px-4 py-1.5 rounded text-sm hover:bg-emerald-700">📊 Excel出力</button>
-            <button onClick={onClose} className="bg-rose-600 text-white px-4 py-1.5 rounded text-sm hover:bg-rose-700">閉じる</button>
+            <button onClick={() => window.print()} className="px-4 py-2 bg-slate-500 text-white rounded hover:bg-slate-600 font-bold flex items-center gap-1">
+              🖨️ 印刷する
+            </button>
+            <button onClick={exportGaigyoExcel} className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 font-bold flex items-center gap-1">
+              📊 Excel出力
+            </button>
+            <button onClick={onClose} className="px-4 py-2 bg-rose-600 text-white rounded hover:bg-rose-700 font-bold">
+              閉じる
+            </button>
           </div>
         </div>
-        
-        <div className="overflow-x-auto overflow-y-auto flex-1 print:overflow-visible print:h-auto">
-          <table ref={tableRef} className="w-full border-collapse text-[11px] whitespace-nowrap print:w-full print:page-break-inside-auto">
+
+        <div className="p-4 overflow-y-auto flex-1 print:overflow-visible print:p-0">
+          <table className="w-full border-collapse text-xs border border-slate-300">
             <thead>
-              <tr className="bg-indigo-700 text-white print:bg-slate-200 print:text-black print:border-black">
-                <th className="border border-slate-300 p-1 w-[30px] print:border-black">No.</th>
-                <th className="border border-slate-300 p-1 w-[90px] print:border-black">作業日</th>
-                <th className="border border-slate-300 p-1 w-[40px] print:border-black">曜日</th>
-                <th className="border border-slate-300 p-1 w-[150px] print:border-black">業務名</th>
-                <th className="border border-slate-300 p-1 w-[80px] print:border-black">作業指揮者</th>
-                <th className="border border-slate-300 p-1 w-[110px] print:border-black">携帯番号</th>
-                <th className="border border-slate-300 p-1 w-[120px] print:border-black">作業員</th>
-                <th className="border border-slate-300 p-1 w-[50px] print:border-black">昼夜別</th>
-                <th className="border border-slate-300 p-1 w-[90px] print:border-black">時間帯</th>
-                <th className="border border-slate-300 p-1 w-[80px] print:border-black">夜達番号等</th>
-                <th className="border border-slate-300 p-1 w-[120px] print:border-black">関連夜達留変等</th>
-                <th className="border border-slate-300 p-1 w-[120px] print:border-black">場所</th>
-                <th className="border border-slate-300 p-1 w-[120px] print:border-black">業者名①</th>
-                <th className="border border-slate-300 p-1 w-[80px] print:border-black">作業責任者</th>
-                <th className="border border-slate-300 p-1 w-[110px] print:border-black">業者携帯</th>
-                <th className="border border-slate-300 p-1 w-[40px] print:border-black">人数</th>
-                <th className="border border-slate-300 p-1 w-[40px] print:border-black">列監</th>
-                <th className="border border-slate-300 p-1 w-[40px] print:border-black">整理員</th>
-                <th className="border border-slate-300 p-1 w-[120px] print:border-black">備考</th>
+              <tr className="bg-slate-100 text-slate-800 border-b border-slate-300">
+                <th className="p-2 border border-slate-300 w-[30px]">No.</th>
+                <th className="p-2 border border-slate-300 w-[90px]">作業日</th>
+                <th className="p-2 border border-slate-300 w-[40px]">曜日</th>
+                <th className="p-2 border border-slate-300 w-[150px]">業務名</th>
+                <th className="p-2 border border-slate-300 w-[80px]">作業指揮者</th>
+                <th className="p-2 border border-slate-300 w-[110px]">携帯番号</th>
+                <th className="p-2 border border-slate-300 w-[120px]">作業員</th>
+                <th className="p-2 border border-slate-300 w-[50px]">昼夜別</th>
+                <th className="p-2 border border-slate-300 w-[90px]">時間帯</th>
+                <th className="p-2 border border-slate-300 w-[80px]">夜達番号等</th>
+                <th className="p-2 border border-slate-300 w-[120px]">関連夜達留変等</th>
+                <th className="p-2 border border-slate-300 w-[120px]">場所</th>
+                <th className="p-2 border border-slate-300 w-[120px]">業者名①</th>
+                <th className="p-2 border border-slate-300 w-[80px]">作業責任者</th>
+                <th className="p-2 border border-slate-300 w-[110px]">業者携帯</th>
+                <th className="p-2 border border-slate-300 w-[40px]">人数</th>
+                <th className="p-2 border border-slate-300 w-[40px]">列監</th>
+                <th className="p-2 border border-slate-300 w-[40px]">整理員</th>
+                <th className="p-2 border border-slate-300 w-[120px]">備考</th>
               </tr>
             </thead>
             <tbody>
@@ -212,40 +223,34 @@ export default function GaigyoModal({ onClose }: { onClose: () => void }) {
                 const dateFmt = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
                 
                 return (
-                  <tr key={r.id} className="print:page-break-inside-avoid">
-                    <td className="border border-slate-300 p-1 text-center print:border-black print:text-black">{idx + 1}</td>
-                    <td className="border border-slate-300 p-1 text-center print:border-black print:text-black">{dateFmt}</td>
-                    <td className="border border-slate-300 p-1 text-center print:border-black print:text-black">{w}</td>
-                    <td className="border border-slate-300 p-1 text-left whitespace-normal min-w-[150px] print:border-black print:text-black">
-                      {r.gyomuName.includes('（予備日）') ? (
-                        <>
-                          {r.gyomuName.replace('（予備日）', '')}
-                          <span className="text-rose-600 text-[10px] border border-rose-600 px-1 rounded ml-1 print:text-black print:border-black">（予備日）</span>
-                        </>
-                      ) : r.gyomuName}
-                    </td>
-                    <td className="border border-slate-300 p-1 text-center print:border-black print:text-black">{r.leader}</td>
-                    <td className="border border-slate-300 p-1 text-center print:border-black print:text-black">{r.phone}</td>
-                    <td className="border border-slate-300 p-1 text-left whitespace-normal min-w-[120px] print:border-black print:text-black">{r.workerStr}</td>
-                    <td className="border border-slate-300 p-1 text-center font-bold print:border-black print:text-black">{r.dayNight}</td>
-                    <td className="border border-slate-300 p-1 text-center print:border-black print:text-black">{r.timeStr}</td>
-                    <td className="border border-slate-300 p-1 text-center font-bold text-indigo-700 text-[12px] print:border-black print:text-black">{r.yoruNo}</td>
-                    <td className="border border-slate-300 p-1 print:border-black">
-                      <input type="text" defaultValue={r.isRyuchi} placeholder="入力可" className="w-full p-0.5 border border-slate-300 rounded-sm text-[11px] print:border-none print:bg-transparent print:text-black" />
-                    </td>
-                    <td className="border border-slate-300 p-1 text-left whitespace-normal min-w-[120px] print:border-black print:text-black">{r.location}</td>
-                    <td className="border border-slate-300 p-1 text-left whitespace-normal print:border-black print:text-black">{r.partName}</td>
-                    <td className="border border-slate-300 p-1 text-center print:border-black print:text-black">{r.partLeader}</td>
-                    <td className="border border-slate-300 p-1 text-center print:border-black print:text-black">{r.partPhone}</td>
-                    <td className="border border-slate-300 p-1 text-center print:border-black print:text-black">{r.partCount}</td>
-                    <td className="border border-slate-300 p-1 text-center print:border-black print:text-black">{r.partGCount}</td>
-                    <td className="border border-slate-300 p-1 text-center print:border-black print:text-black">{r.partTCount}</td>
-                    <td className="border border-slate-300 p-1 print:border-black">
-                      <input type="text" defaultValue={r.partOther} placeholder="入力可" className="w-full p-0.5 border border-slate-300 rounded-sm text-[11px] print:border-none print:bg-transparent print:text-black" />
-                    </td>
+                  <tr key={idx} className="border-b border-slate-300">
+                    <td className="p-1 border border-slate-300 text-center">{idx + 1}</td>
+                    <td className="p-1 border border-slate-300 text-center">{dateFmt}</td>
+                    <td className="p-1 border border-slate-300 text-center">{w}</td>
+                    <td className="p-1 border border-slate-300">{r.gyomuName}</td>
+                    <td className="p-1 border border-slate-300 text-center">{r.leader}</td>
+                    <td className="p-1 border border-slate-300 text-center">{r.phone}</td>
+                    <td className="p-1 border border-slate-300">{r.workerStr}</td>
+                    <td className="p-1 border border-slate-300 text-center">{r.dayNight}</td>
+                    <td className="p-1 border border-slate-300 text-center">{r.timeStr}</td>
+                    <td className="p-1 border border-slate-300 text-center font-bold text-indigo-700">{r.yoruNo}</td>
+                    <td className="p-0 border border-slate-300"><input type="text" defaultValue={r.isRyuchi} className="w-full p-1 border-none focus:ring-1 focus:ring-indigo-500" /></td>
+                    <td className="p-1 border border-slate-300">{r.location}</td>
+                    <td className="p-1 border border-slate-300">{r.partName}</td>
+                    <td className="p-1 border border-slate-300 text-center">{r.partLeader}</td>
+                    <td className="p-1 border border-slate-300 text-center">{r.partPhone}</td>
+                    <td className="p-1 border border-slate-300 text-center">{r.partCount}</td>
+                    <td className="p-1 border border-slate-300 text-center">{r.partGCount}</td>
+                    <td className="p-1 border border-slate-300 text-center">{r.partTCount}</td>
+                    <td className="p-0 border border-slate-300"><input type="text" defaultValue={r.partOther} className="w-full p-1 border-none focus:ring-1 focus:ring-indigo-500" /></td>
                   </tr>
                 );
               })}
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={19} className="p-8 text-center text-slate-500">外業管理表のデータがありません。</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
