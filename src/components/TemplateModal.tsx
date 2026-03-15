@@ -94,7 +94,7 @@ export default function TemplateModal({ onClose }: { onClose: () => void }) {
             <label className="block text-xs font-bold mb-1">安全対策 本文:</label>
             <textarea 
               className="w-full border rounded p-2 text-sm" 
-              rows={6}
+              rows={10}
               placeholder="ここに安全対策の文章を入力してください"
               value={content} 
               onChange={e => setContent(e.target.value)} 
