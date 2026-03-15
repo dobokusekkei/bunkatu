@@ -10,16 +10,11 @@ export default function Login({ onLogin }: LoginProps) {
   const [password, setPassword] = useState('');
   const { showAlert } = useDialog();
 
-  const isVercel = import.meta.env.VITE_IS_VERCEL === 'true';
-
-  // ★ 全角英数・記号を半角に変換し、半角英数と「すべての半角記号」以外を弾く関数
   const sanitizeAlphanumericAndSymbols = (str: string) => {
     if (!str) return '';
-    // 全角の英数字と記号（！〜～）を半角に変換
     let halfVal = str.replace(/[！-～]/g, function(s) {
       return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
     });
-    // 半角の英数とすべての記号 (ASCIIコードの 0x20 ～ 0x7E) のみを許可。日本語などは消去
     return halfVal.replace(/[^\x20-\x7E]/g, '');
   };
 
@@ -30,27 +25,11 @@ export default function Login({ onLogin }: LoginProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isVercel) {
-      if (loginId === 'admin' && password === 'admin') {
-        onLogin({ 
-          id: 1, 
-          name: 'テスト管理者 (Vercel)', 
-          department: 'システム管理部', 
-          role: '管理者',
-          login_id: 'admin'
-        });
-        return;
-      } else {
-        showAlert('Vercelテスト環境では ID: admin / PASS: admin を入力してください');
-        return;
-      }
-    }
-
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('api.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login_id: loginId, password })
+        body: JSON.stringify({ action: 'login', login_id: loginId, password })
       });
       const data = await res.json();
       if (data.status === 'success') {
@@ -59,7 +38,7 @@ export default function Login({ onLogin }: LoginProps) {
         showAlert(data.error || 'ログインに失敗しました');
       }
     } catch (error) {
-      showAlert('サーバーエラーが発生しました');
+      showAlert('サーバー通信エラーが発生しました。社内サーバーの設定を確認してください。');
     }
   };
 
@@ -67,12 +46,6 @@ export default function Login({ onLogin }: LoginProps) {
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md border border-slate-200">
         <h2 className="text-2xl font-bold text-center text-indigo-900 mb-6">安全作業計画書システム</h2>
-        
-        {isVercel && (
-          <div className="bg-amber-100 text-amber-800 text-xs p-3 rounded mb-4 font-bold text-center border border-amber-200">
-            Vercelテスト用: ID「admin」 / PASS「admin」
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
