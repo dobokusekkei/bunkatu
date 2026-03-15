@@ -246,7 +246,7 @@ export default function App() {
               user={user} 
             />
             
-            {/* ★ mt-8 pt-6 から mt-4 pt-4 に減らし、ボタン上の間延びを解消 */}
+            {/* ★ mt-8 pt-6 から mt-0 pt-4 に減らし、ボタン上の間延びを解消 */}
             <div className="mt-4 pt-4 border-t border-slate-200 flex justify-center">
               <button 
                 onClick={handleExportPlan} 
