@@ -276,7 +276,6 @@ export default function MainForm({
           {formData.yorudatsu_csv_data && <span className="text-emerald-600 font-bold ml-2">✅ 読込済</span>}
         </div>
       </div>
-      {/* ★ border 指定を外して、1050pxの空間をフルに使う */}
       <div className="w-[1050px] mb-4">
         <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
           <thead>
@@ -340,8 +339,8 @@ export default function MainForm({
           {workerCols > 1 && <button type="button" onClick={() => setWorkerCols(prev => prev - 1)} className="bg-rose-500 text-white px-2 py-1 rounded text-xs font-bold">－ 枠を減らす</button>}
         </div>
       </div>
-      {/* ★ border 指定を外してフルに使い、追加時は水平スクロール */}
-      <div className="w-[1050px] overflow-x-auto mb-4">
+      {/* ★ workerCols が 1 の時はスクロールバーを隠し、2以上の時は表示する */}
+      <div className={`w-[1050px] mb-4 ${workerCols > 1 ? 'overflow-x-auto' : 'overflow-hidden'}`}>
         <table 
           className="table-fixed border-collapse bg-white text-sm text-center"
           style={{ width: `${1050 + (workerCols - 1) * 150}px` }}
@@ -445,7 +444,6 @@ export default function MainForm({
       <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 w-[1050px]">
         5. 協力業者
       </div>
-      {/* ★ border 指定を外して、1050pxの空間をフルに使う */}
       <div className="w-[1050px] mb-4">
         <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
           <thead>
@@ -517,7 +515,6 @@ export default function MainForm({
       <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 w-[1050px]">
         6. 発注者立会人
       </div>
-      {/* ★ border 指定を外して、1050pxの空間をフルに使う */}
       <div className="w-[1050px] mb-4">
         <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
           <thead>
