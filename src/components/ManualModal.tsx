@@ -30,10 +30,12 @@ export default function ManualModal({ onClose }: ManualModalProps) {
           <p className="mb-4">画面上部のボタンから、各種管理画面や保存機能にアクセスできます。</p>
           <ul className="list-none space-y-3 pl-2">
             <li><span className="inline-block px-2 py-1 bg-indigo-600 text-white rounded text-xs font-bold mr-2">👥 名簿管理</span> 当社社員や協力業者の氏名・携帯番号を登録します。</li>
+            <li><span className="inline-block px-2 py-1 bg-indigo-600 text-white rounded text-xs font-bold mr-2">⚙️ チーム管理</span> 各チームのグループ名や連絡先を設定します。</li>
             <li><span className="inline-block px-2 py-1 bg-emerald-600 text-white rounded text-xs font-bold mr-2">💾 DBに保存</span> 現在入力している計画書をデータベースに保存します。</li>
             <li><span className="inline-block px-2 py-1 bg-amber-500 text-slate-900 rounded text-xs font-bold mr-2">📂 保存データ一覧</span> 保存済みの計画書を検索・読み込み・削除します。</li>
             <li><span className="inline-block px-2 py-1 bg-cyan-600 text-white rounded text-xs font-bold mr-2">📋 外業管理表</span> 登録されている全データを集約し、外業管理表として一覧表示・印刷・Excel出力します。</li>
-            <li><span className="inline-block px-2 py-1 bg-slate-500 text-white rounded text-xs font-bold mr-2">⚙️ ユーザー管理</span> システムにログインできるアカウントを追加・編集します（※管理者のみ表示）。</li>
+            <li><span className="inline-block px-2 py-1 bg-slate-600 text-white rounded text-xs font-bold mr-2">📖 使い方</span> このマニュアルを開きます。</li>
+            <li><span className="inline-block px-2 py-1 bg-purple-600 text-white rounded text-xs font-bold mr-2">⚙️ ユーザー管理</span> システムにログインできるアカウントを追加・編集します（※管理者のみ表示）。</li>
             <li><span className="inline-block px-2 py-1 bg-rose-600 text-white rounded text-xs font-bold mr-2">🚪 ログアウト</span> システムから安全にログアウトします。</li>
           </ul>
 
@@ -45,8 +47,8 @@ export default function ManualModal({ onClose }: ManualModalProps) {
           <h3 className="text-base text-slate-800 border-b border-dashed border-slate-300 pb-1 mt-6 mb-3 font-bold">📝 基本情報と安全対策</h3>
           <p className="mb-3">工番、作業場所、工事内容などの基本情報を入力します。安全対策の文章は、事前に登録したテンプレートから一発で呼び出すことが可能です。</p>
           <ul className="list-disc pl-6 space-y-1 mb-6">
-            <li><b>チームの選択:</b> プルダウンの横にある <span className="inline-block px-1.5 py-0.5 bg-slate-500 text-white rounded text-xs">⚙️</span> ボタンから、チーム情報の登録・編集ができます。</li>
-            <li><b>安全対策テンプレート:</b> プルダウンで選択すると、自動的に文章が入力欄にセットされます。</li>
+            <li><b>チームの選択:</b> プルダウンで登録済みのチーム情報を呼び出すことができます。</li>
+            <li><b>安全対策テンプレート:</b> プルダウンで選択すると、自動的に文章が入力欄にセットされます。横の <span className="inline-block px-1.5 py-0.5 bg-indigo-600 text-white rounded text-xs">テンプレート管理</span> ボタンから追加・編集が可能です。</li>
           </ul>
 
           <h3 className="text-base text-slate-800 border-b border-dashed border-slate-300 pb-1 mt-6 mb-3 font-bold">📁 夜達CSVの自動転記システム</h3>
@@ -56,7 +58,7 @@ export default function ManualModal({ onClose }: ManualModalProps) {
           </div>
           <ol className="list-decimal pl-6 space-y-1 mb-6">
             <li>「夜達CSVを取り込む」ボタンを押し、対象のCSVファイルを選択します。</li>
-            <li>「✅ 夜達CSVの読み込みが完了しました！」と出れば準備完了です。</li>
+            <li>「✅ 読込済」と出れば準備完了です。</li>
             <li>あとは通常通り作業日と人員を入力してExcelを出力するだけで、裏側で自動マッチングが行われます。</li>
           </ol>
 
@@ -66,8 +68,8 @@ export default function ManualModal({ onClose }: ManualModalProps) {
               <tr>
                 <th className="border border-slate-300 bg-slate-50 p-2 w-1/4 text-left">昼・夜ボタン</th>
                 <td className="border border-slate-300 p-2">
-                  <span className="inline-block px-2 py-0.5 bg-amber-400 text-slate-900 rounded text-xs mr-1">昼</span> を押すと「09:00～17:00」、
-                  <span className="inline-block px-2 py-0.5 bg-slate-600 text-white rounded text-xs mr-1">夜</span> を押すと「00:00～05:00」が自動入力されます。また、夜間の場合は「当社 指揮者」と同じ名前が「閉鎖責任者」に自動コピーされます。
+                  <span className="inline-block px-2 py-0.5 bg-amber-400 text-slate-900 rounded text-xs font-bold mr-1">昼</span> を押すと「09:00～17:00」、
+                  <span className="inline-block px-2 py-0.5 bg-slate-600 text-white rounded text-xs font-bold mr-1">夜</span> を押すと「00:00～05:00」が自動入力されます。また、夜間の場合は「当社 指揮者」と同じ名前が「閉鎖責任者」に自動コピーされます。
                 </td>
               </tr>
               <tr>
@@ -132,7 +134,7 @@ export default function ManualModal({ onClose }: ManualModalProps) {
           <h2 className="text-[18px] text-[#005a9e] border-l-[6px] border-[#005a9e] pl-3 mt-10 mb-4 bg-[#f0f8ff] py-2 font-bold">
             4. 各種マスター登録（名簿・チーム等）
           </h2>
-          <p className="mb-3">名簿やチーム、テンプレートなどは、各項目横の <span className="inline-block px-1.5 py-0.5 bg-slate-500 text-white rounded text-xs">⚙️</span> ボタン、またはツールバーから管理できます。</p>
+          <p className="mb-3">名簿やチーム、テンプレートなどは、ツールバーの管理ボタンから追加・編集・削除が可能です。</p>
           <ul className="list-disc pl-6 space-y-1 mb-6">
             <li><b>1件ずつ登録:</b> フォームに入力して追加します。</li>
             <li><b>CSV一括登録:</b> 指定のフォーマット（カンマ区切り）で作成したCSVファイルを読み込ませることで、数十件のデータを一瞬で取り込むことができます。</li>
