@@ -221,7 +221,8 @@ export default function MainForm({
   const days = [1, 2, 3, 4, 5];
 
   return (
-    <div className="max-w-[1050px] mx-auto pb-8">
+    {/* ★ pb-8 を pb-2 に減らし、フォーム全体の底の余白を削減 */}
+    <div className="max-w-[1050px] mx-auto pb-2">
       {/* 1. 基本情報 */}
       <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 flex justify-between items-center w-[1050px]">
         1. 基本情報
