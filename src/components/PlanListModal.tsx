@@ -17,6 +17,7 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
   const [toDate, setToDate] = useState('');
   const [keyword, setKeyword] = useState('');
   const [selectedTeam, setSelectedTeam] = useState('');
+  const [selectedDept, setSelectedDept] = useState('');
   const [selectedChecks, setSelectedChecks] = useState<string[]>([]);
 
   // デフォルト日付のセット（先月1日 〜 来月末日）
@@ -49,6 +50,7 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
   const resetFilter = () => {
     setKeyword('');
     setSelectedTeam('');
+    setSelectedDept('');
     setSelectedChecks([]);
     setDefaultDateRange();
   };
@@ -67,6 +69,20 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
       }
     });
   };
+
+  // プルダウン用のユニークなチーム名リスト
+  const uniqueTeamNames = useMemo(() => {
+    return Array.from(new Set(teams.map(t => t.team_name))).filter(Boolean);
+  }, [teams]);
+
+  // プルダウン用のユニークな部署名リスト
+  const uniqueDepts = useMemo(() => {
+    return Array.from(new Set(plans.map(p => {
+      let parsed: any = {};
+      try { parsed = JSON.parse(p.form_data); } catch(e) {}
+      return parsed.creator_department || p.user_department || '不明';
+    }))).filter(Boolean).sort();
+  }, [plans]);
 
   // --- データの整形とフィルタリング処理 ---
   const filteredPlans = useMemo(() => {
@@ -113,9 +129,9 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
         if (parsed[`chk_denki_${i}`]) { checks.add('電気'); checksArray.push('電気'); }
         if (parsed[`chk_teiden_${i}`]) { checks.add('停電'); checksArray.push('停電'); }
         if (parsed[`chk_toro_${i}`]) { checks.add('トロ'); checksArray.push('トロ'); }
-        if (parsed[`chk_kanban_${i}`]) { checks.add('表示板'); checksArray.push('表示板'); } // 変更
-        if (parsed[`chk_fumikiri_${i}`]) { checks.add('鳴止'); checksArray.push('鳴止'); } // 変更
-        if (parsed[`chk_ryuchi_${i}`]) { checks.add('留変'); checksArray.push('留変'); } // 変更
+        if (parsed[`chk_kanban_${i}`]) { checks.add('表示板'); checksArray.push('表示板'); }
+        if (parsed[`chk_fumikiri_${i}`]) { checks.add('鳴止'); checksArray.push('鳴止'); }
+        if (parsed[`chk_ryuchi_${i}`]) { checks.add('留変'); checksArray.push('留変'); }
       }
       const checksStr = Array.from(checks).join('、');
 
@@ -146,22 +162,20 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
         if (!p.searchText.includes(k)) return false;
       }
 
-      // 3. チームのフィルタリング (OR検索 / 完全一致)
+      // 3. チームのフィルタリング (完全一致)
       if (selectedTeam && p.teamName !== selectedTeam) return false;
 
-      // 4. 手配・立会のフィルタリング (すべて含む AND検索)
+      // 4. 部署のフィルタリング (完全一致)
+      if (selectedDept && p.creatorDept !== selectedDept) return false;
+
+      // 5. 手配・立会のフィルタリング (すべて含む AND検索)
       for (let reqCheck of selectedChecks) {
         if (!p.checksArray.includes(reqCheck)) return false;
       }
 
       return true;
     });
-  }, [plans, teams, fromDate, toDate, keyword, selectedTeam, selectedChecks]);
-
-  // プルダウン用のユニークなチーム名リスト
-  const uniqueTeamNames = useMemo(() => {
-    return Array.from(new Set(teams.map(t => t.team_name))).filter(Boolean);
-  }, [teams]);
+  }, [plans, teams, fromDate, toDate, keyword, selectedTeam, selectedDept, selectedChecks]);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -196,8 +210,17 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
                 />
               </div>
               <div>
+                <b className="text-[#005a9e] mr-2">🏢 部署:</b>
+                <select value={selectedDept} onChange={e => setSelectedDept(e.target.value)} className="border rounded px-2 py-1 w-32">
+                  <option value="">すべて表示</option>
+                  {uniqueDepts.map((name, i) => (
+                    <option key={i} value={name}>{name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <b className="text-[#005a9e] mr-2">🏢 チーム:</b>
-                <select value={selectedTeam} onChange={e => setSelectedTeam(e.target.value)} className="border rounded px-2 py-1 w-40">
+                <select value={selectedTeam} onChange={e => setSelectedTeam(e.target.value)} className="border rounded px-2 py-1 w-32">
                   <option value="">すべて表示</option>
                   {uniqueTeamNames.map((name, i) => (
                     <option key={i} value={name}>{name}</option>
@@ -227,7 +250,6 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
           </div>
 
           <div className="overflow-x-auto">
-            {/* DB保存名の列を削除し、レイアウトを調整 */}
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-100 text-slate-700">
