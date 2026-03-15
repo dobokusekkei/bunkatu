@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, Save, Download, FolderOpen, ClipboardList, Settings, FileText, LogOut, BookOpen, UserCog } from 'lucide-react';
+import { Users, Save, Download, FolderOpen, ClipboardList, Settings, BookOpen, UserCog, LogOut } from 'lucide-react';
 import PersonnelModal from './components/PersonnelModal';
 import TemplateModal from './components/TemplateModal';
 import TeamModal from './components/TeamModal';
@@ -16,6 +16,7 @@ export default function App() {
   const [user, setUser] = useState<any>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
+  // モーダル開閉用のState
   const [isPersonnelModalOpen, setIsPersonnelModalOpen] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
@@ -24,8 +25,9 @@ export default function App() {
   const [isUserManagementModalOpen, setIsUserManagementModalOpen] = useState(false);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
-  const [saveName, setSaveName] = useState('');
+  // データ管理用のState
   const [loadedPlanId, setLoadedPlanId] = useState<number | null>(null);
+  const [loadedDates, setLoadedDates] = useState<string[]>(['', '', '', '', '']);
   const [plans, setPlans] = useState<any[]>([]);
   
   const [formData, setFormData] = useState<any>({});
@@ -33,13 +35,16 @@ export default function App() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
 
-  const [loadedTitle, setLoadedTitle] = useState('');
-  const prevJobNoRef = useRef('');
+  // Vercelテスト環境かどうかの判定フラグ
+  const isVercel = import.meta.env.VITE_IS_VERCEL === 'true';
 
   // 初回ロード時の認証チェック
-  // VercelではAPIがないため失敗しますが、エラーを握り潰してログイン画面へ誘導します
   useEffect(() => {
     const checkAuth = async () => {
+      if (isVercel) {
+        setIsAuthChecking(false);
+        return;
+      }
       try {
         const res = await fetch('/api/auth/me');
         if (res.ok) {
@@ -47,16 +52,15 @@ export default function App() {
           setUser(data.user);
         }
       } catch (error) {
-        // Vercel等の環境でAPIが存在しない場合はスルーします
+        console.error("Auth check failed", error);
       } finally {
         setIsAuthChecking(false);
       }
     };
     checkAuth();
-  }, []);
+  }, [isVercel]);
 
-  // ★ ネットワークエラーを吸収する安全なFetch関数
-  // Vercel環境で404エラーHTMLが返ってきた場合でも、空配列を返してアプリのクラッシュを防ぎます
+  // Vercel等のバックエンド不在環境でもアプリがクラッシュしないようにする安全なFetch関数
   const safeFetch = async (url: string) => {
     try {
       const res = await fetch(url);
@@ -70,116 +74,131 @@ export default function App() {
 
   const fetchData = async () => {
     if (!user) return;
-    const [fetchedPlans, fetchedPersonnel, fetchedTemplates, fetchedTeams] = await Promise.all([
-      safeFetch('/api/plans/all'),
-      safeFetch('/api/personnel'),
-      safeFetch('/api/templates'),
-      safeFetch('/api/teams')
-    ]);
-    setPlans(fetchedPlans);
-    setPersonnel(fetchedPersonnel);
-    setTemplates(fetchedTemplates);
-    setTeams(fetchedTeams);
+    if (isVercel) {
+      setPlans([]); setPersonnel([]); setTemplates([]); setTeams([]);
+      return;
+    }
+    
+    try {
+      const [plansRes, personnelRes, templatesRes, teamsRes] = await Promise.all([
+        safeFetch('/api/plans/all'), 
+        safeFetch('/api/personnel'),
+        safeFetch('/api/templates'), 
+        safeFetch('/api/teams')
+      ]);
+      setPlans(plansRes);
+      setPersonnel(personnelRes);
+      setTemplates(templatesRes);
+      setTeams(teamsRes);
+    } catch (error) {
+      showAlert('データの取得に失敗しました。');
+    }
   };
 
   useEffect(() => {
     fetchData();
   }, [user, isPersonnelModalOpen, isTemplateModalOpen, isTeamModalOpen]);
 
-  // saveNameとjob_noの同期処理
-  useEffect(() => {
-    if (formData.job_no !== prevJobNoRef.current) {
-      if (!saveName || saveName === '未定' || saveName === loadedTitle || saveName === prevJobNoRef.current) {
-        setSaveName(formData.job_no || '');
-      }
-      prevJobNoRef.current = formData.job_no || '';
-    }
-  }, [formData.job_no, saveName, loadedTitle]);
-
   const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } catch (error) {
-      // APIエラー時でも強制的にログアウト状態にします
-    } finally {
-      setUser(null);
+    if (!isVercel) {
+      try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
     }
+    setUser(null);
   };
 
+  // ==========================================
+  // 保存処理（タイトルの自動生成・上書き判定）
+  // ==========================================
   const handleSave = async () => {
-    if (!saveName) {
-      showAlert('DB保存名を入力してください。');
+    // 保存直前に「工番」と「工事内容」を合体させてタイトルを自動生成
+    const job = formData.job_no || '';
+    const content = formData.job_content || '';
+    let autoTitle = `${job}_${content}`.trim();
+    if (!autoTitle || autoTitle === '_') {
+      autoTitle = `無題の計画書_${new Date().getTime()}`;
+    }
+
+    if (isVercel) {
+      showAlert('【テスト環境】保存シミュレーション完了（※実際には保存されません）');
       return;
     }
 
-    const payload = {
-      title: saveName,
-      form_data: JSON.stringify(formData)
-    };
+    // 現在画面に入力されている1日目〜5日目の日付を取得
+    const currentDates = ['', '', '', '', ''];
+    for (let i = 1; i <= 5; i++) {
+      currentDates[i-1] = formData[`date_${i}`] || '';
+    }
+
+    const payload = { title: autoTitle, form_data: JSON.stringify(formData) };
 
     const performSave = async (isOverwrite: boolean) => {
       try {
-        let res;
-        if (isOverwrite && loadedPlanId) {
-          res = await fetch(`/api/plans/${loadedPlanId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-        } else {
-          res = await fetch('/api/plans', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-        }
+        let res = isOverwrite && loadedPlanId
+          ? await fetch(`/api/plans/${loadedPlanId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+          : await fetch('/api/plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
 
         const data = await res.json();
         if (res.ok && data.status === 'success') {
-          setSaveName(data.saved_title);
-          setLoadedTitle(data.saved_title);
           setLoadedPlanId(data.id);
+          setLoadedDates(currentDates); // 保存成功時に現在の日付を記憶
           fetchData();
           showAlert('データベースに保存しました。');
         } else {
           showAlert(data.error || '保存エラーが発生しました。');
         }
       } catch (error) {
-        // ★ Vercelテスト用：通信エラー時は保存した「フリ」をしてテストを続行させます
-        showAlert('【テスト環境】入力内容の保存シミュレーション完了（※Vercel上のため実際には保存されません）');
+        showAlert('保存エラーが発生しました。');
       }
     };
 
-    if (loadedPlanId && loadedTitle === saveName) {
-      showConfirm("⚠️ 日付も保存名も変更されていないため、既存のデータを「上書き保存」します。\nよろしいですか？\n(「キャンセル」を押すと別のデータとして新規保存します)", 
-        () => performSave(true),
+    // 読み込んだデータであり、かつ「作業日時」が変更されていない場合のみ上書き確認
+    if (loadedPlanId && JSON.stringify(loadedDates) === JSON.stringify(currentDates)) {
+      showConfirm("⚠️ 日付が変更されていないため、既存のデータを「上書き保存」します。\nよろしいですか？\n(キャンセルを押すと新規データとして保存します)", 
+        () => performSave(true), 
         () => performSave(false)
       );
     } else {
+      // 新規、または日付が変わっている場合は自動的に新規保存
       performSave(false);
     }
   };
 
+  // ==========================================
+  // 読込処理
+  // ==========================================
   const handleLoadPlan = async () => {
     if (!loadedPlanId) return;
     const plan = plans.find(p => p.id === loadedPlanId);
     if (plan) {
-      setSaveName(plan.title);
-      setLoadedTitle(plan.title);
-      try {
-        setFormData(JSON.parse(plan.form_data));
+      try { 
+        const parsed = JSON.parse(plan.form_data);
+        setFormData(parsed); 
+        
+        // 読み込んだ時点の日付を記憶（上書き判定用）
+        const tempDates = ['', '', '', '', ''];
+        for (let i = 1; i <= 5; i++) {
+          tempDates[i-1] = parsed[`date_${i}`] || '';
+        }
+        setLoadedDates(tempDates);
+
       } catch (e) {
-        console.error("Failed to parse plan data", e);
+        console.error("データのパースに失敗しました", e);
       }
     }
   };
 
+  // ==========================================
+  // Excel出力処理
+  // ==========================================
   const handleExportPlan = async () => {
+    if (isVercel) {
+      showAlert('【テスト環境】Excel出力シミュレーション（※Vercel上では実際のExcel生成は行われません）');
+      return;
+    }
+
     try {
       const res = await fetch('/api/export/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData)
       });
       
       if (res.ok) {
@@ -187,37 +206,30 @@ export default function App() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `安全作業計画書_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
+        a.download = `安全作業計画書_${formData.job_no || '未定'}_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.xlsx`;
+        document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url);
       } else {
-        // ★ Vercel等のバックエンド不在環境ではシミュレーション結果を表示します
-        showAlert('【テスト環境】Excel出力シミュレーション（※Vercel上では実際のExcel生成サーバーが動作しません）');
+        showAlert('Excel出力に失敗しました。');
       }
     } catch (error) {
-      showAlert('【テスト環境】Excel出力シミュレーション（※Vercel上では実際のExcel生成サーバーが動作しません）');
+      showAlert('Excel出力エラーが発生しました。');
     }
   };
 
+  // ----------------------------------------------------
+  // レンダリング
+  // ----------------------------------------------------
   if (isAuthChecking) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
-  if (!user) {
-    return <Login onLogin={setUser} />;
-  }
+  if (!user) return <Login onLogin={setUser} />;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 font-sans text-sm">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4">
           <div className="flex justify-between items-center border-b-2 border-indigo-900 pb-2 mb-4">
-            <h2 className="text-xl font-bold text-indigo-900">
-              安全作業計画書 入力・DB管理システム
-            </h2>
-            <div className="text-slate-700 font-medium">
-              👤 {user.name} ({user.department})
-            </div>
+            <h2 className="text-xl font-bold text-indigo-900">安全作業計画書 入力・DB管理システム</h2>
+            <div className="text-slate-700 font-medium">👤 {user.name} ({user.department})</div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 bg-slate-100 p-2 rounded-lg border border-slate-200">
@@ -230,17 +242,8 @@ export default function App() {
             
             <div className="w-px h-6 bg-slate-300 mx-1"></div>
             
-            <label className="font-bold text-xs text-slate-700">DB保存名:</label>
-            <input 
-              type="text" 
-              className="border border-slate-300 rounded px-2 py-1 w-40 text-xs focus:outline-none focus:border-indigo-500" 
-              value={saveName}
-              onChange={(e) => setSaveName(e.target.value)}
-            />
-            <button 
-              onClick={handleSave} 
-              className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 font-medium text-xs"
-            >
+            {/* DB保存名入力欄を削除し、保存ボタンだけを配置 */}
+            <button onClick={handleSave} className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 font-medium text-xs">
               <Save size={16} /> DBに保存
             </button>
             
@@ -254,7 +257,7 @@ export default function App() {
             </button>
             
             <div className="flex-1"></div>
-
+            
             <button onClick={() => setIsManualModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-700 font-medium text-xs">
               <BookOpen size={16} /> 使い方
             </button>
@@ -271,35 +274,48 @@ export default function App() {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
           <MainForm 
-            formData={formData}
-            setFormData={setFormData}
-            personnel={personnel}
-            templates={templates}
-            teams={teams}
-            setIsTemplateModalOpen={setIsTemplateModalOpen}
+            formData={formData} 
+            setFormData={setFormData} 
+            personnel={personnel} 
+            templates={templates} 
+            teams={teams} 
+            setIsTemplateModalOpen={setIsTemplateModalOpen} 
           />
-
-          <div className="mt-8 pt-4 border-t border-slate-200 flex justify-center">
+          
+          {/* ★ Excel色の文字幅に合わせたボタンに変更 */}
+          <div className="mt-8 pt-6 border-t border-slate-200 flex justify-center">
             <button 
               onClick={handleExportPlan} 
-              className="flex items-center gap-2 px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-bold text-lg shadow-md transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-10 py-3 bg-[#217346] text-white rounded-lg hover:bg-[#1e6b3e] font-bold text-lg shadow-md transition-colors"
             >
-              <Download size={24} /> Excel を生成してダウンロード
+              <Download size={24} /> 出力 (Excel形式でダウンロード)
             </button>
           </div>
         </div>
-
       </div>
 
+      {/* 各種モーダル */}
       {isPersonnelModalOpen && <PersonnelModal onClose={() => setIsPersonnelModalOpen(false)} />}
       {isTemplateModalOpen && <TemplateModal onClose={() => setIsTemplateModalOpen(false)} />}
       {isTeamModalOpen && <TeamModal onClose={() => setIsTeamModalOpen(false)} />}
-      {isPlanListModalOpen && <PlanListModal onClose={() => setIsPlanListModalOpen(false)} onSelect={(id) => { setLoadedPlanId(id); setTimeout(() => document.getElementById('trigger-load')?.click(), 0); }} plans={plans} fetchData={fetchData} />}
+      {isPlanListModalOpen && (
+        <PlanListModal 
+          onClose={() => setIsPlanListModalOpen(false)} 
+          onSelect={(id) => { 
+            setLoadedPlanId(id); 
+            // setLoadedPlanIdが反映された直後にデータを読み込むためのトリガー
+            setTimeout(() => document.getElementById('trigger-load')?.click(), 0); 
+          }} 
+          plans={plans} 
+          teams={teams} 
+          fetchData={fetchData} 
+        />
+      )}
       {isGaigyoModalOpen && <GaigyoModal onClose={() => setIsGaigyoModalOpen(false)} />}
       {isUserManagementModalOpen && <UserManagementModal onClose={() => setIsUserManagementModalOpen(false)} />}
       {isManualModalOpen && <ManualModal onClose={() => setIsManualModalOpen(false)} />}
       
-      {/* Hidden button to trigger load from modal */}
+      {/* useEffectの代わりに使用する見えない読込トリガーボタン */}
       <button id="trigger-load" className="hidden" onClick={handleLoadPlan}></button>
     </div>
   );
