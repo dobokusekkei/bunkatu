@@ -6,13 +6,12 @@ interface PlanListModalProps {
   onSelect: (id: number) => void;
   plans: any[];
   fetchData: () => void;
-  teams?: any[]; // チーム名解決および検索用
+  teams?: any[]; 
 }
 
 export default function PlanListModal({ onClose, onSelect, plans, fetchData, teams = [] }: PlanListModalProps) {
   const { showConfirm, showAlert } = useDialog();
 
-  // --- 検索フィルター用 State ---
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [keyword, setKeyword] = useState('');
@@ -20,7 +19,6 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedChecks, setSelectedChecks] = useState<string[]>([]);
 
-  // デフォルト日付のセット（先月1日 〜 来月末日）
   const setDefaultDateRange = () => {
     const now = new Date();
     const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -36,7 +34,6 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
     setToDate(format(lastDayOfNextMonth));
   };
 
-  // 初回表示時にデフォルト日付をセット
   useEffect(() => {
     setDefaultDateRange();
   }, []);
@@ -58,7 +55,11 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
   const handleDelete = async (id: number) => {
     showConfirm('この保存データを削除しますか？', async () => {
       try {
-        const res = await fetch(`/api/plans/${id}`, { method: 'DELETE' });
+        const res = await fetch('api.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete_plan', id })
+        });
         if (res.ok) {
           fetchData();
         } else {
@@ -70,12 +71,10 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
     });
   };
 
-  // プルダウン用のユニークなチーム名リスト
   const uniqueTeamNames = useMemo(() => {
     return Array.from(new Set(teams.map(t => t.team_name))).filter(Boolean);
   }, [teams]);
 
-  // プルダウン用のユニークな部署名リスト
   const uniqueDepts = useMemo(() => {
     return Array.from(new Set(plans.map(p => {
       let parsed: any = {};
@@ -84,7 +83,6 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
     }))).filter(Boolean).sort();
   }, [plans]);
 
-  // --- データの整形とフィルタリング処理 ---
   const filteredPlans = useMemo(() => {
     const keywords = keyword.toLowerCase().split(/\s+/).filter(k => k);
 
@@ -121,7 +119,6 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
       }
       const partsStr = Array.from(parts).join('、');
 
-      // 手配・立会の略称変更
       let checks = new Set<string>();
       let checksArray: string[] = [];
       for (let i = 1; i <= 5; i++) {
@@ -153,26 +150,16 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
         searchText
       };
     }).filter(p => {
-      // 1. 登録日のフィルタリング (範囲指定)
       if (fromDate && p.createdAt < fromDate) return false;
       if (toDate && p.createdAt > toDate) return false;
-
-      // 2. キーワードのフィルタリング (AND検索)
       for (let k of keywords) {
         if (!p.searchText.includes(k)) return false;
       }
-
-      // 3. チームのフィルタリング (完全一致)
       if (selectedTeam && p.teamName !== selectedTeam) return false;
-
-      // 4. 部署のフィルタリング (完全一致)
       if (selectedDept && p.creatorDept !== selectedDept) return false;
-
-      // 5. 手配・立会のフィルタリング (すべて含む AND検索)
       for (let reqCheck of selectedChecks) {
         if (!p.checksArray.includes(reqCheck)) return false;
       }
-
       return true;
     });
   }, [plans, teams, fromDate, toDate, keyword, selectedTeam, selectedDept, selectedChecks]);
@@ -189,7 +176,6 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
         </div>
 
         <div className="p-4 overflow-y-auto flex-1">
-          {/* 検索・絞り込みフィルター エリア */}
           <div className="bg-[#f1f8ff] p-4 rounded-lg mb-4 border border-[#cce5ff] text-[13px]">
             <div className="flex flex-wrap gap-4 items-center mb-3">
               <div>
@@ -214,7 +200,7 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
                 <select value={selectedDept} onChange={e => setSelectedDept(e.target.value)} className="border rounded px-2 py-1 w-32">
                   <option value="">すべて表示</option>
                   {uniqueDepts.map((name, i) => (
-                    <option key={i} value={name}>{name}</option>
+                    <option key={i} value={name as string}>{name as string}</option>
                   ))}
                 </select>
               </div>
@@ -223,7 +209,7 @@ export default function PlanListModal({ onClose, onSelect, plans, fetchData, tea
                 <select value={selectedTeam} onChange={e => setSelectedTeam(e.target.value)} className="border rounded px-2 py-1 w-32">
                   <option value="">すべて表示</option>
                   {uniqueTeamNames.map((name, i) => (
-                    <option key={i} value={name}>{name}</option>
+                    <option key={i} value={name as string}>{name as string}</option>
                   ))}
                 </select>
               </div>
