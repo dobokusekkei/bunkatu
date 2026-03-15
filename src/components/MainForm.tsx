@@ -277,15 +277,14 @@ export default function MainForm({
         </div>
       </div>
       <div className="w-[1050px] border border-slate-300 mb-4">
-        {/* ★ w-max をやめ、w-full table-fixed でピクセル幅を完全固定（間延び防止） */}
         <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
-              <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>コピー</th>
-              <th className="p-2 border" style={{ width: '215px', minWidth: '215px' }}>作業日時</th>
-              <th className="p-2 border" style={{ width: '300px', minWidth: '300px' }}>時間入力</th>
-              <th className="p-2 border" style={{ width: '375px', minWidth: '375px' }}>手配・立会確認</th>
-              <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>操作</th>
+              <th className="p-2 border" style={{ width: '80px' }}>コピー</th>
+              <th className="p-2 border" style={{ width: '215px' }}>作業日時</th>
+              <th className="p-2 border" style={{ width: '300px' }}>時間入力</th>
+              <th className="p-2 border" style={{ width: '375px' }}>手配・立会確認</th>
+              <th className="p-2 border" style={{ width: '80px' }}>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -341,21 +340,24 @@ export default function MainForm({
         </div>
       </div>
       <div className="w-[1050px] overflow-x-auto mb-4 border border-slate-300">
-        {/* ★ ここだけは枠追加時に水平スクロールさせるため w-max を維持する */}
-        <table className="w-max border-collapse bg-white text-sm text-center">
+        {/* ★ widthを計算して動的にピクセル指定し、table-fixedで絶対固定する */}
+        <table 
+          className="table-fixed border-collapse bg-white text-sm text-center"
+          style={{ width: `${1050 + (workerCols - 1) * 150}px` }}
+        >
           <thead>
             <tr className="bg-slate-100">
-              <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>コピー</th>
-              <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>当社 指揮者</th>
-              <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>携帯番号</th>
-              <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>作業員1</th>
-              {workerCols >= 2 && <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>作業員2</th>}
-              {workerCols >= 3 && <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>作業員3</th>}
-              {workerCols >= 4 && <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>作業員4</th>}
-              <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>閉鎖責任者</th>
-              <th className="p-2 border" style={{ width: '145px', minWidth: '145px' }}>監視員1</th>
-              <th className="p-2 border" style={{ width: '145px', minWidth: '145px' }}>監視員2</th>
-              <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>操作</th>
+              <th className="p-2 border" style={{ width: '80px' }}>コピー</th>
+              <th className="p-2 border" style={{ width: '150px' }}>当社 指揮者</th>
+              <th className="p-2 border" style={{ width: '150px' }}>携帯番号</th>
+              <th className="p-2 border" style={{ width: '150px' }}>作業員1</th>
+              {workerCols >= 2 && <th className="p-2 border" style={{ width: '150px' }}>作業員2</th>}
+              {workerCols >= 3 && <th className="p-2 border" style={{ width: '150px' }}>作業員3</th>}
+              {workerCols >= 4 && <th className="p-2 border" style={{ width: '150px' }}>作業員4</th>}
+              <th className="p-2 border" style={{ width: '150px' }}>閉鎖責任者</th>
+              <th className="p-2 border" style={{ width: '145px' }}>監視員1</th>
+              <th className="p-2 border" style={{ width: '145px' }}>監視員2</th>
+              <th className="p-2 border" style={{ width: '80px' }}>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -443,19 +445,18 @@ export default function MainForm({
         5. 協力業者
       </div>
       <div className="w-[1050px] border border-slate-300 mb-4">
-        {/* ★ w-max をやめ、w-full table-fixed でピクセル幅を完全固定 */}
         <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
-              <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>コピー</th>
-              <th className="p-2 border" style={{ width: '350px', minWidth: '350px' }}>協力業者 業者名</th>
-              <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>協力業者 責任者</th>
-              <th className="p-2 border" style={{ width: '150px', minWidth: '150px' }}>携帯番号</th>
-              <th className="p-2 border" style={{ width: '60px', minWidth: '60px' }}>従事者</th>
-              <th className="p-2 border" style={{ width: '60px', minWidth: '60px' }}>監視員</th>
-              <th className="p-2 border" style={{ width: '60px', minWidth: '60px' }}>誘導員</th>
-              <th className="p-2 border" style={{ width: '60px', minWidth: '60px' }}>その他</th>
-              <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>操作</th>
+              <th className="p-2 border" style={{ width: '80px' }}>コピー</th>
+              <th className="p-2 border" style={{ width: '350px' }}>協力業者 業者名</th>
+              <th className="p-2 border" style={{ width: '150px' }}>協力業者 責任者</th>
+              <th className="p-2 border" style={{ width: '150px' }}>携帯番号</th>
+              <th className="p-2 border" style={{ width: '60px' }}>従事者</th>
+              <th className="p-2 border" style={{ width: '60px' }}>監視員</th>
+              <th className="p-2 border" style={{ width: '60px' }}>誘導員</th>
+              <th className="p-2 border" style={{ width: '60px' }}>その他</th>
+              <th className="p-2 border" style={{ width: '80px' }}>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -515,14 +516,13 @@ export default function MainForm({
         6. 発注者立会人
       </div>
       <div className="w-[1050px] border border-slate-300 mb-4">
-        {/* ★ w-max をやめ、w-full table-fixed でピクセル幅を完全固定 */}
         <table className="w-full table-fixed border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
-              <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>コピー</th>
-              <th className="p-2 border" style={{ width: '100px', minWidth: '100px' }}>人数 (C列)</th>
-              <th className="p-2 border" style={{ width: '790px', minWidth: '790px' }}>所属部署・氏名 (D列)</th>
-              <th className="p-2 border" style={{ width: '80px', minWidth: '80px' }}>操作</th>
+              <th className="p-2 border" style={{ width: '80px' }}>コピー</th>
+              <th className="p-2 border" style={{ width: '100px' }}>人数 (C列)</th>
+              <th className="p-2 border" style={{ width: '790px' }}>所属部署・氏名 (D列)</th>
+              <th className="p-2 border" style={{ width: '80px' }}>操作</th>
             </tr>
           </thead>
           <tbody>
