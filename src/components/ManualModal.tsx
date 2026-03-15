@@ -1,158 +1,157 @@
 import React from 'react';
 
-interface ManualModalProps {
-  onClose: () => void;
-}
-
-export default function ManualModal({ onClose }: ManualModalProps) {
+export default function ManualModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#f4f7f6] rounded-xl shadow-xl w-full max-w-[900px] max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
         
-        <div className="flex justify-between items-center p-4 bg-white border-b border-slate-200">
-          <h3 className="text-xl font-bold text-slate-800 m-0">システムの使い方</h3>
-          <button onClick={onClose} className="px-4 py-2 bg-slate-500 text-white rounded hover:bg-slate-600 font-bold transition-colors">
+        {/* ヘッダー */}
+        <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50 rounded-t-xl">
+          <h3 className="text-xl font-bold text-indigo-900 m-0 flex items-center gap-2">
+            <span className="text-2xl">📖</span> 安全作業計画書システム 完全マニュアル
+          </h3>
+          <button onClick={onClose} className="px-6 py-2 bg-slate-500 text-white rounded hover:bg-slate-600 font-bold shadow-sm">
             閉じる
           </button>
         </div>
 
-        <div className="p-8 overflow-y-auto flex-1 text-[15px] leading-relaxed text-slate-800 bg-white m-4 rounded-lg shadow-sm">
-          
-          <h1 className="text-2xl text-[#005a9e] border-b-4 border-[#005a9e] pb-2 mb-6 text-center font-bold">
-            📖 安全作業計画書システム ご利用マニュアル
-          </h1>
-          <p className="mb-8 text-center">本システムは、安全作業計画書の作成、Excel出力、および過去データのデータベース管理を効率化するためのツールです。</p>
+        {/* コンテンツエリア */}
+        <div className="p-6 overflow-y-auto flex-1 text-sm text-slate-700 leading-relaxed space-y-8 bg-white">
 
-          {/* セクション1 */}
-          <h2 className="text-[18px] text-[#005a9e] border-l-[6px] border-[#005a9e] pl-3 mt-10 mb-4 bg-[#f0f8ff] py-2 font-bold">
-            1. 画面上部（ツールバー）の機能
-          </h2>
-          <p className="mb-4">画面上部のボタンから、各種管理画面や保存機能にアクセスできます。</p>
-          <ul className="list-none space-y-3 pl-2">
-            <li><span className="inline-block px-2 py-1 bg-indigo-600 text-white rounded text-xs font-bold mr-2">👥 名簿管理</span> 当社社員や協力業者の氏名・携帯番号を登録します。</li>
-            <li><span className="inline-block px-2 py-1 bg-indigo-600 text-white rounded text-xs font-bold mr-2">⚙️ チーム管理</span> 各チームのグループ名や連絡先を設定します。</li>
-            <li><span className="inline-block px-2 py-1 bg-emerald-600 text-white rounded text-xs font-bold mr-2">💾 DBに保存</span> 現在入力している計画書をデータベースに保存します。</li>
-            <li><span className="inline-block px-2 py-1 bg-amber-500 text-slate-900 rounded text-xs font-bold mr-2">📂 保存データ一覧</span> 保存済みの計画書を検索・読み込み・削除します。</li>
-            <li><span className="inline-block px-2 py-1 bg-cyan-600 text-white rounded text-xs font-bold mr-2">📋 外業管理表</span> 登録されている全データを集約し、外業管理表として一覧表示・印刷・Excel出力します。</li>
-            <li><span className="inline-block px-2 py-1 bg-slate-600 text-white rounded text-xs font-bold mr-2">📖 使い方</span> このマニュアルを開きます。</li>
-            <li><span className="inline-block px-2 py-1 bg-purple-600 text-white rounded text-xs font-bold mr-2">⚙️ ユーザー管理</span> システムにログインできるアカウントを追加・編集します（※管理者のみ表示）。</li>
-            <li><span className="inline-block px-2 py-1 bg-rose-600 text-white rounded text-xs font-bold mr-2">🚪 ログアウト</span> システムから安全にログアウトします。</li>
-          </ul>
+          {/* 1. システムの全体的な流れ */}
+          <section>
+            <h4 className="text-lg font-bold text-indigo-800 border-b-2 border-indigo-200 pb-2 mb-4 flex items-center gap-2">
+              <span>1️⃣</span> システムの基本的な流れ
+            </h4>
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+              <p className="mb-3">本システムは、ブラウザ上で安全作業計画書を作成し、社内サーバー（データベース）に保存・管理した上で、Excel形式で出力するためのアプリです。</p>
+              <ol className="list-decimal list-inside space-y-2 font-medium">
+                <li><b className="text-indigo-600">事前準備：</b> 画面上部のボタンから「名簿管理」「チーム管理」「テンプレート管理」を開き、よく使うデータを登録します。</li>
+                <li><b className="text-indigo-600">データ入力：</b> メイン画面で基本情報、安全対策、作業日時（1日目〜5日目）、人員配置を入力します。</li>
+                <li><b className="text-indigo-600">DBに保存：</b> 「DBに保存」ボタンを押すと、入力したデータがサーバーに保管されます。</li>
+                <li><b className="text-indigo-600">Excel出力：</b> 画面一番下の「出力」ボタンを押すと、入力内容が所定のフォーマットに書き込まれたExcelファイルがダウンロードされます。</li>
+              </ol>
+            </div>
+          </section>
 
-          {/* セクション2 */}
-          <h2 className="text-[18px] text-[#005a9e] border-l-[6px] border-[#005a9e] pl-3 mt-10 mb-4 bg-[#f0f8ff] py-2 font-bold">
-            2. 計画書の作成と入力補助
-          </h2>
-          
-          <h3 className="text-base text-slate-800 border-b border-dashed border-slate-300 pb-1 mt-6 mb-3 font-bold">📝 基本情報と安全対策</h3>
-          <p className="mb-3">工番、作業場所、工事内容などの基本情報を入力します。安全対策の文章は、事前に登録したテンプレートから一発で呼び出すことが可能です。</p>
-          <ul className="list-disc pl-6 space-y-1 mb-6">
-            <li><b>チームの選択:</b> プルダウンで登録済みのチーム情報を呼び出すことができます。</li>
-            <li><b>安全対策テンプレート:</b> プルダウンで選択すると、自動的に文章が入力欄にセットされます。横の <span className="inline-block px-1.5 py-0.5 bg-indigo-600 text-white rounded text-xs">テンプレート管理</span> ボタンから追加・編集が可能です。</li>
-          </ul>
+          {/* 2. 名簿・チーム・部署管理について */}
+          <section>
+            <h4 className="text-lg font-bold text-indigo-800 border-b-2 border-indigo-200 pb-2 mb-4 flex items-center gap-2">
+              <span>2️⃣</span> 名簿・チーム・部署の管理
+            </h4>
+            <div className="space-y-4">
+              <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+                <b className="text-base text-slate-900 flex items-center gap-2 mb-2">👥 名簿管理とCSV一括登録</b>
+                <p>当社社員および協力業者の名簿を登録します。登録したデータは、メイン画面の各プルダウン（作業指揮者、作業員、協力業者など）に自動で反映されます。</p>
+                <ul className="list-disc list-inside mt-2 space-y-1 text-slate-600 ml-2">
+                  <li><b>CSV一括登録：</b> <code>区分(our/partner), 業者名, 氏名, 携帯番号</code> の4列で作成したCSVファイルを読み込ませることで、一括で名簿を登録できます。</li>
+                </ul>
+              </div>
+              
+              <div className="p-4 bg-rose-50 border border-rose-100 rounded-lg shadow-sm">
+                <b className="text-base text-rose-900 flex items-center gap-2 mb-2">🏢 部署別のデータ管理（権限について）</b>
+                <p>名簿やチームのデータは、作成したユーザーの「所属部署」に紐づいて管理されます。</p>
+                <ul className="list-disc list-inside mt-2 space-y-1 text-rose-800 ml-2">
+                  <li><b>一般ユーザー：</b> 自分が所属する部署に登録された名簿・チームだけがプルダウンに表示されます。</li>
+                  <li><b>管理者ユーザー：</b> すべての部署のデータを閲覧・編集できます。「ユーザー管理」画面から新規アカウントの発行や権限の変更が可能です。</li>
+                </ul>
+              </div>
+            </div>
+          </section>
 
-          <h3 className="text-base text-slate-800 border-b border-dashed border-slate-300 pb-1 mt-6 mb-3 font-bold">📁 夜達CSVの自動転記システム</h3>
-          <div className="bg-[#fff3cd] border-l-4 border-[#ffeeba] p-4 my-4 rounded">
-            <b className="text-[#856404]">💡 夜達CSVを取り込むと…</b><br/>
-            作業日時と「当社の閉鎖責任者（または指揮者）」が一致する夜達データを探し出し、Excel出力時に<b>「駅名（構内/駅間の自動判定）」「夜達番号」「路線名」などを自動でExcelに転記</b>します。
-          </div>
-          <ol className="list-decimal pl-6 space-y-1 mb-6">
-            <li>「夜達CSVを取り込む」ボタンを押し、対象のCSVファイルを選択します。</li>
-            <li>「✅ 読込済」と出れば準備完了です。</li>
-            <li>あとは通常通り作業日と人員を入力してExcelを出力するだけで、裏側で自動マッチングが行われます。</li>
-          </ol>
+          {/* 3. 計画書入力画面の強力な機能 */}
+          <section>
+            <h4 className="text-lg font-bold text-indigo-800 border-b-2 border-indigo-200 pb-2 mb-4 flex items-center gap-2">
+              <span>3️⃣</span> 計画書入力画面の便利機能（裏技）
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <b className="text-slate-900 flex items-center gap-2 mb-2">🖱️ 日付のドラッグ＆ドロップ（一括コピー）</b>
+                <p className="text-slate-700">「3. 作業日時」などの各行の左端にある黄色の<b className="text-amber-700">「◯日目 ≡掴む≡」</b>の部分をマウスでクリックしたまま、別の日数の行へ移動してドロップしてください。</p>
+                <p className="mt-2 text-slate-600 text-xs">その日の入力内容（時間、人員、チェックボックスなど）が一瞬で丸ごとコピーされます。連日同じ作業内容の時に入力を大幅に短縮できます。</p>
+              </div>
 
-          <h3 className="text-base text-slate-800 border-b border-dashed border-slate-300 pb-1 mt-6 mb-3 font-bold">⚡ 便利な入力サポート機能</h3>
-          <table className="w-full border-collapse text-sm mb-6">
-            <tbody>
-              <tr>
-                <th className="border border-slate-300 bg-slate-50 p-2 w-1/4 text-left">昼・夜ボタン</th>
-                <td className="border border-slate-300 p-2">
-                  <span className="inline-block px-2 py-0.5 bg-amber-400 text-slate-900 rounded text-xs font-bold mr-1">昼</span> を押すと「09:00～17:00」、
-                  <span className="inline-block px-2 py-0.5 bg-slate-600 text-white rounded text-xs font-bold mr-1">夜</span> を押すと「00:00～05:00」が自動入力されます。また、夜間の場合は「当社 指揮者」と同じ名前が「閉鎖責任者」に自動コピーされます。
-                </td>
-              </tr>
-              <tr>
-                <th className="border border-slate-300 bg-slate-50 p-2 text-left">ドラッグ＆ドロップ<br/>（コピー）</th>
-                <td className="border border-slate-300 p-2">各行の左端にある「≡掴む≡」をマウスで掴み、別の日付の行へドロップすると、<b>その日の入力内容（人員やチェック項目など）が丸ごとコピー</b>されます。連続する作業日に便利です。</td>
-              </tr>
-              <tr>
-                <th className="border border-slate-300 bg-slate-50 p-2 text-left">作業員の増減</th>
-                <td className="border border-slate-300 p-2">「＋ 作業員を追加表示」を押すと、当社の作業員入力枠を最大4名まで増やすことができます。</td>
-              </tr>
-              <tr>
-                <th className="border border-slate-300 bg-slate-50 p-2 text-left">手配・立会チェック</th>
-                <td className="border border-slate-300 p-2">軌道、電気、停電、トロ、表示板、鳴止、留変 のチェックボックスで必要な立会等を選択します。</td>
-              </tr>
-            </tbody>
-          </table>
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <b className="text-slate-900 flex items-center gap-2 mb-2">↔️ 作業員枠の増減（当社体制）</b>
+                <p className="text-slate-700">「4. 当社体制」の右上にある<b className="text-blue-700">「＋ 作業員を追加表示」</b>ボタンを押すと、作業員の入力枠を最大4人分まで増やすことができます。</p>
+                <p className="mt-2 text-slate-600 text-xs">枠を増やした場合は、画面内に水平スクロールバーが出現し、レイアウトを崩さずに入力が可能です。</p>
+              </div>
 
-          {/* セクション3 */}
-          <h2 className="text-[18px] text-[#005a9e] border-l-[6px] border-[#005a9e] pl-3 mt-10 mb-4 bg-[#f0f8ff] py-2 font-bold">
-            3. データの保存・検索・読み込み
-          </h2>
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <b className="text-slate-900 flex items-center gap-2 mb-2">⭕️ 危険予知の自動図形描画</b>
+                <p className="text-slate-700">「2. 予測される危険」で「触車」「感電」「墜落」などにチェックを入れると、Excel出力時に該当箇所に<b className="text-rose-600">自動で赤い丸（◯）</b>が描画されます。</p>
+                <p className="mt-2 text-slate-600 text-xs">「その他」にチェックを入れ、横のテキストボックスに内容を入力した場合も、指定位置に図形と文字が正確に出力されます。</p>
+              </div>
 
-          <h3 className="text-base text-slate-800 border-b border-dashed border-slate-300 pb-1 mt-6 mb-3 font-bold">💾 データの保存</h3>
-          <p className="mb-3">入力が終わったら、ツールバーの <span className="inline-block px-2 py-1 bg-emerald-600 text-white rounded text-xs font-bold">💾 DBに保存</span> をクリックします。</p>
-          <div className="bg-[#fff3cd] border-l-4 border-[#ffeeba] p-4 my-4 rounded">
-            <b className="text-[#856404]">💡 タイトルの自動生成</b><br/>
-            保存名を入力する必要はありません。システムが自動的に<b>「工番 ＋ 工事内容」</b>の組み合わせでタイトルを生成して保存します。
-          </div>
-          <ul className="list-disc pl-6 space-y-1 mb-6">
-            <li>過去のデータを読み込んで修正した場合、<b>「作業日時」が変更されていなければ「上書き保存」</b>するかどうか確認されます。日付が変わっている場合は、自動的に別日の「新規データ」として保存されます。</li>
-          </ul>
+              <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                <b className="text-slate-900 flex items-center gap-2 mb-2">🔠 全角入力の自動半角化（サニタイズ）</b>
+                <p className="text-slate-700">工番、人数、携帯番号などの項目は、IME（日本語入力）をオンにして全角で入力しても、システムが裏側で自動的に<b className="text-indigo-700">半角英数・記号に変換</b>します。</p>
+                <p className="mt-2 text-slate-600 text-xs">長音記号（ー）なども自動でハイフン（-）に変換され、フォーカスが外れた瞬間に不要な日本語は完全消去されるため、エラーを防ぎます。</p>
+              </div>
 
-          <h3 className="text-base text-slate-800 border-b border-dashed border-slate-300 pb-1 mt-6 mb-3 font-bold">🔍 高度な検索とデータの読み込み</h3>
-          <p className="mb-3">
-            ツールバーの <span className="inline-block px-2 py-1 bg-amber-500 text-slate-900 rounded text-xs font-bold">📂 保存データ一覧</span> を開くと、保存されたデータが表示されます。
-            <b>初期状態では「先月1日～来月末日」のデータのみが表示</b>されています。
-          </p>
-          
-          <table className="w-full border-collapse text-sm mb-4">
-            <tbody>
-              <tr>
-                <th className="border border-slate-300 bg-slate-50 p-2 w-1/4 text-left">📅 登録日の範囲</th>
-                <td className="border border-slate-300 p-2">指定した期間内に登録・保存されたデータを絞り込みます。</td>
-              </tr>
-              <tr>
-                <th className="border border-slate-300 bg-slate-50 p-2 text-left">🔍 キーワード検索</th>
-                <td className="border border-slate-300 p-2">工番、作業場所、氏名などのフリーワードで検索します。<b>スペースで区切ると複数条件（AND検索）</b>になります。<br/>例：「梅田 軌道」と入力すると、両方を含む計画書だけが表示されます。</td>
-              </tr>
-              <tr>
-                <th className="border border-slate-300 bg-slate-50 p-2 text-left">🏢 チーム選択</th>
-                <td className="border border-slate-300 p-2">特定のチームの計画書だけを絞り込んで表示します。</td>
-              </tr>
-              <tr>
-                <th className="border border-slate-300 bg-slate-50 p-2 text-left">✅ 手配・立会検索</th>
-                <td className="border border-slate-300 p-2">チェックした立会項目を<b>「すべて」含んでいる計画書</b>だけを絞り込みます。<br/>例：「停電」と「トロ」にチェックすると、両方とも行う計画書だけが残ります。</td>
-              </tr>
-            </tbody>
-          </table>
-          <p className="mb-6">目的のデータが見つかったら、行の右側にある <span className="inline-block px-2 py-1 bg-indigo-600 text-white rounded text-xs font-bold">読込</span> ボタンを押すと、メイン画面にデータが復元されます。</p>
+            </div>
+          </section>
 
-          {/* セクション4 */}
-          <h2 className="text-[18px] text-[#005a9e] border-l-[6px] border-[#005a9e] pl-3 mt-10 mb-4 bg-[#f0f8ff] py-2 font-bold">
-            4. 各種マスター登録（名簿・チーム等）
-          </h2>
-          <p className="mb-3">名簿やチーム、テンプレートなどは、ツールバーの管理ボタンから追加・編集・削除が可能です。</p>
-          <ul className="list-disc pl-6 space-y-1 mb-6">
-            <li><b>1件ずつ登録:</b> フォームに入力して追加します。</li>
-            <li><b>CSV一括登録:</b> 指定のフォーマット（カンマ区切り）で作成したCSVファイルを読み込ませることで、数十件のデータを一瞬で取り込むことができます。</li>
-          </ul>
+          {/* 4. 夜達CSVの自動転記機能 */}
+          <section>
+            <h4 className="text-lg font-bold text-indigo-800 border-b-2 border-indigo-200 pb-2 mb-4 flex items-center gap-2">
+              <span>4️⃣</span> 📁 夜達CSVの自動転記（超強力機能）
+            </h4>
+            <div className="bg-white p-4 rounded-lg border border-slate-300 shadow-sm">
+              <p className="mb-3 text-slate-900 font-medium">「3. 作業日時」の右上にあるボタンから「夜間作業連絡票」のCSVファイルを読み込ませることで、手入力を極限まで減らすことができます。</p>
+              
+              <div className="bg-slate-100 p-3 rounded text-sm mb-3">
+                <b>【自動転記の発動条件】</b><br/>
+                入力した <b className="text-indigo-600">「作業日」</b> と <b className="text-indigo-600">「閉鎖責任者（氏名のスペース無視）」</b> が、読み込んだCSVデータと完全に一致した場合に発動します。
+              </div>
 
-          {/* セクション5 */}
-          <h2 className="text-[18px] text-[#005a9e] border-l-[6px] border-[#005a9e] pl-3 mt-10 mb-4 bg-[#f0f8ff] py-2 font-bold">
-            5. Excelの出力
-          </h2>
-          <p className="mb-3">すべての入力が完了したら、画面の一番下にある緑色のボタンを押してください。</p>
-          <div className="text-center my-6">
-            <span className="inline-block bg-[#217346] text-white px-8 py-3 rounded text-lg font-bold shadow-md">
-              出力 (Excel形式でダウンロード)
-            </span>
-          </div>
-          <p className="mb-6">自動的に所定のExcelフォーマット（メインシートおよび別紙のworkシート等）にデータが転記され、ファイルがダウンロードされます。ダウンロード前に「DBに保存しますか？」という確認が出ますので、保存し忘れを防ぐことができます。</p>
+              <ul className="list-disc list-inside space-y-2 text-slate-700">
+                <li><b>自動抽出される項目：</b> 路線名（京都線・神戸線など）、作業場所（◯◯〜◯◯）、夜達番号、関連夜達等。</li>
+                <li><b>Excel出力時の挙動：</b> 一致した日の「別紙（workシート）」の指定セルに、抽出したデータが自動的に書き込まれます。夜達番号は自動で3桁のゼロ埋め（例：005）に整形されます。</li>
+                <li>一度読み込んだCSVデータは計画書と一緒にデータベースに保存されるため、再度データを開いた時も自動で復元されます。</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* 5. データの検索と外業管理表 */}
+          <section>
+            <h4 className="text-lg font-bold text-indigo-800 border-b-2 border-indigo-200 pb-2 mb-4 flex items-center gap-2">
+              <span>5️⃣</span> データの検索機能 と 外業管理表
+            </h4>
+            
+            <div className="space-y-4">
+              <div>
+                <b className="text-base text-slate-900 flex items-center gap-2 mb-1">📂 保存データ一覧（高度な検索）</b>
+                <p className="text-slate-700 mb-2">過去に保存した計画書を、様々な条件で瞬時に探し出すことができます。</p>
+                <ul className="list-disc list-inside space-y-1 text-slate-600 ml-2 bg-slate-50 p-3 rounded border border-slate-200">
+                  <li><b>作業日検索：</b> 登録日ではなく、計画書の中に入力された「1日目〜5日目の作業日」が指定期間に含まれるものを検索します。「当月前後」や「すべての期間」ボタンで一発切り替えが可能です。</li>
+                  <li><b>キーワードAND検索：</b> 工番、場所、工事内容、外注業者名などをスペース区切りで入力すると、すべてを含むデータを絞り込めます。</li>
+                  <li><b>立会・手配検索：</b> 「軌道」「電気」「停電」などのチェックボックスをポチポチ押すだけで、その手配が必要な計画書だけをリストアップできます。</li>
+                </ul>
+              </div>
+
+              <div>
+                <b className="text-base text-slate-900 flex items-center gap-2 mb-1">📋 外業管理表の自動生成</b>
+                <p className="text-slate-700 mb-2">サーバーに保存されているすべての計画書データから、日付ごとの作業情報を自動で抽出し、一覧表を作成します。</p>
+                <ul className="list-disc list-inside space-y-1 text-slate-600 ml-2 bg-slate-50 p-3 rounded border border-slate-200">
+                  <li><b>昼夜の自動判定：</b> 入力された開始時間から「昼」「夜」を自動で判定します。</li>
+                  <li><b>直接編集：</b> 表示された管理表の「留置変更」「備考」などのテキストボックスには、画面上で直接文字を打ち込むことができます。</li>
+                  <li><b>A3横印刷＆Excel出力：</b> 「🖨️ 印刷する」ボタンを押せば、ブラウザから直接A3横サイズで綺麗に印刷できます。また、「📊 Excel出力」ボタンで一覧表をそのままExcel化してダウンロード可能です。</li>
+                </ul>
+              </div>
+            </div>
+          </section>
 
         </div>
+        
+        {/* フッター（閉じるボタン） */}
+        <div className="p-4 border-t border-slate-200 bg-slate-50 rounded-b-xl text-right">
+          <button onClick={onClose} className="px-6 py-2 bg-slate-500 text-white rounded hover:bg-slate-600 font-bold shadow-sm">
+            閉じる
+          </button>
+        </div>
+
       </div>
     </div>
   );
