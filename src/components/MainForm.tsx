@@ -530,7 +530,7 @@ export default function MainForm({
       <div className="bg-indigo-600 text-white p-2 font-bold rounded mt-6 mb-2 w-[1050px]">
         6. 発注者立会人
       </div>
-      <div className="w-[1050px] mb-4">
+      <div className="w-[1050px] mb-0">
         <table className="w-full table-fixed border-collapse border border-slate-300 bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
