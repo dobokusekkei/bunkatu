@@ -50,6 +50,13 @@ export default function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
+
+      // ＋＋＋ ここから追加：一時的にログインをスキップ ＋＋＋
+      setUser({ id: 999, name: '画面チェック用', department: 'システム管理部', role: '管理者', login_id: 'admin' });
+      setIsAuthChecking(false);
+      return; // ← ここで処理を終わらせて、本来の通信をブロックします
+      // ＋＋＋ 追加ここまで ＋＋＋
+
       const data = await fetchApi('me');
       if (data && data.status === 'success') {
         setUser(data.user);
