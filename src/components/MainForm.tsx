@@ -195,7 +195,7 @@ export default function MainForm({
           </tr>
           <tr>
             <td className="bg-slate-100 p-2 border border-slate-300 align-top">作業内容 (B35)</td>
-            <td colSpan={5} className="p-2 border border-slate-300"><textarea name="work_detail" value={formData.work_detail || ''} onChange={handleChange} rows={3} className="w-full border rounded p-1"></textarea></td>
+            <td colSpan={5} className="p-2 border border-slate-300"><textarea name="work_detail" value={formData.work_detail || ''} onChange={handleChange} rows={6} className="w-full border rounded p-1"></textarea></td>
           </tr>
         </tbody>
       </table>
@@ -205,7 +205,7 @@ export default function MainForm({
         2. 予測される危険 ＆ 安全対策
       </div>
       <div className="p-4 border border-slate-300 bg-white mb-4">
-        <div className="mb-4 flex flex-wrap gap-4 items-center">
+        <div className="mb-4 flex flex-wrap gap-4 items-center min-h-[40px]">
           <span className="font-bold">予測される危険 (該当箇所に赤丸を描画します):</span>
           <label className="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="dangers" value="触車" checked={formData.dangers?.includes('触車') || false} onChange={handleDangerChange} /> 触車</label>
           <label className="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="dangers" value="感電" checked={formData.dangers?.includes('感電') || false} onChange={handleDangerChange} /> 感電</label>
@@ -236,12 +236,7 @@ export default function MainForm({
         <div className="text-xs font-normal flex items-center bg-white text-slate-800 px-2 py-1 rounded">
           <span className="bg-amber-400 text-slate-900 px-1 rounded mr-2 font-bold">自動転記</span>
           📁 夜達CSVを取り込む: 
-          <input 
-            type="file" 
-            accept=".csv" 
-            onChange={handleCsvUpload} 
-            className="ml-2 text-xs file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer border border-slate-200 rounded bg-white" 
-          />
+          <input type="file" accept=".csv" onChange={handleCsvUpload} className="ml-2 text-xs w-[350px] file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 cursor-pointer border border-slate-200 rounded bg-white" />
           {formData.yorudatsu_csv_data && <span className="text-emerald-600 font-bold ml-2">✅ 読込済</span>}
         </div>
       </div>
