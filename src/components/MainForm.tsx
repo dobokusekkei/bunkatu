@@ -21,28 +21,53 @@ export default function MainForm({
 }) {
   const { showAlert, showConfirm } = useDialog();
   const [workerCols, setWorkerCols] = useState(1);
-  
-  // ★ ユーザーの部署に基づいて、選択可能なチームを絞り込む
-  const filteredTeams = teams.filter(t => {
-    if (user.role === '管理者') return true; // 管理者はすべて選択可能
-    return t.department === user.department; // 一般ユーザーは自分の部署のチームのみ
-  });
 
+  // ★ 全角英数を半角に変換し、英数字と一部の記号（- _ . /）以外を消去する関数
+  const sanitizeAlphanumeric = (str: string) => {
+    if (!str) return '';
+    let halfVal = str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
+      return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+    });
+    return halfVal.replace(/[^a-zA-Z0-9\-_./]/g, '');
+  };
+
+  // ★ 半角英数に固定する対象の項目名（正規表現で各日時の項目にマッチさせる）
+  const targetNames = [
+    'job_no', 
+    /^part_count_\d+$/, 
+    /^part_g_count_\d+$/, 
+    /^part_t_count_\d+$/, 
+    /^part_other_\d+$/, 
+    /^client_num_\d+$/
+  ];
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData((prev: any) => ({ ...prev, [name]: checked }));
     } else {
+      // 対象項目かどうかを判定し、対象なら入力された瞬間にサニタイズを実行
+      let finalValue = value;
+      const isTarget = targetNames.some(pattern => {
+        if (typeof pattern === 'string') return name === pattern;
+        return pattern.test(name);
+      });
+
+      if (isTarget) {
+        finalValue = sanitizeAlphanumeric(value);
+      }
+
       setFormData((prev: any) => {
-        const newData = { ...prev, [name]: value };
+        const newData = { ...prev, [name]: finalValue };
         
+        // 閉鎖責任者の自動同期
         if (name.startsWith('start_') || name.startsWith('our_leader_')) {
           const dayMatch = name.match(/_(\d+)$/);
           if (dayMatch) {
             const day = dayMatch[1];
-            const leader = name.startsWith('our_leader_') ? value : newData[`our_leader_${day}`];
-            const start = name.startsWith('start_') ? value : newData[`start_${day}`];
+            const leader = name.startsWith('our_leader_') ? finalValue : newData[`our_leader_${day}`];
+            const start = name.startsWith('start_') ? finalValue : newData[`start_${day}`];
             
             if (leader && start) {
               const hour = parseInt(start.split(':')[0], 10);
@@ -60,6 +85,11 @@ export default function MainForm({
       });
     }
   };
+
+  const filteredTeams = teams.filter(t => {
+    if (user.role === '管理者') return true; 
+    return t.department === user.department; 
+  });
 
   const handleTemplateSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const tId = e.target.value;
@@ -183,10 +213,10 @@ export default function MainForm({
         <tbody>
           <tr>
             <td className="bg-slate-100 p-2 border border-slate-300 w-[10%]">工番 (L12)</td>
-            <td className="p-2 border border-slate-300 w-[12%]"><input type="text" name="job_no" value={formData.job_no || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+            {/* ★ inputMode="url" でスマホでも英数キーボードを開かせやすくする */}
+            <td className="p-2 border border-slate-300 w-[12%]"><input type="text" name="job_no" inputMode="url" value={formData.job_no || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
             <td className="bg-slate-100 p-2 border border-slate-300 w-[8%]">チーム</td>
             <td className="p-2 border border-slate-300 w-[15%]">
-              {/* ★ 絞り込んだチーム(filteredTeams)のみを表示 */}
               <select name="team_id" value={formData.team_id || ''} onChange={handleChange} className="w-full border rounded p-1">
                 <option value="">選択</option>
                 {filteredTeams.map(t => <option key={t.id} value={t.id}>{t.team_name}</option>)}
@@ -310,6 +340,7 @@ export default function MainForm({
         </div>
       </div>
       <div className="overflow-x-auto mb-4 border border-slate-300">
+        {/* 全体の幅はデフォルト構成(1名)で 1000px になります */}
         <table className="w-max border-collapse bg-white text-sm text-center">
           <thead>
             <tr className="bg-slate-100">
@@ -415,7 +446,8 @@ export default function MainForm({
           <thead>
             <tr className="bg-slate-100">
               <th className="p-2 border w-[80px]">コピー</th>
-              <th className="p-2 border w-[250px]">協力業者 業者名</th>
+              {/* ★ 業者名の幅を広げ、全体の幅を 1000px に揃える */}
+              <th className="p-2 border w-[320px]">協力業者 業者名</th>
               <th className="p-2 border w-[140px]">協力業者 責任者</th>
               <th className="p-2 border w-[140px]">携帯番号</th>
               <th className="p-2 border w-[60px]">従事者</th>
@@ -463,10 +495,10 @@ export default function MainForm({
                     </select>
                   </td>
                   <td className="p-2 border"><input type="text" name={`part_phone_${day}`} value={formData[`part_phone_${day}`] || ''} readOnly className="w-full border rounded p-1 bg-slate-100" /></td>
-                  <td className="p-2 border"><input type="text" name={`part_count_${day}`} value={formData[`part_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-                  <td className="p-2 border"><input type="text" name={`part_g_count_${day}`} value={formData[`part_g_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-                  <td className="p-2 border"><input type="text" name={`part_t_count_${day}`} value={formData[`part_t_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
-                  <td className="p-2 border"><input type="text" name={`part_other_${day}`} value={formData[`part_other_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                  <td className="p-2 border"><input type="text" inputMode="url" name={`part_count_${day}`} value={formData[`part_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                  <td className="p-2 border"><input type="text" inputMode="url" name={`part_g_count_${day}`} value={formData[`part_g_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                  <td className="p-2 border"><input type="text" inputMode="url" name={`part_t_count_${day}`} value={formData[`part_t_count_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                  <td className="p-2 border"><input type="text" inputMode="url" name={`part_other_${day}`} value={formData[`part_other_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
                   <td className="p-2 border text-center">
                     <button type="button" onClick={() => clearDay(day)} className="border border-rose-500 text-rose-500 px-3 py-1 rounded text-xs hover:bg-rose-500 hover:text-white whitespace-nowrap">クリア</button>
                   </td>
@@ -487,7 +519,8 @@ export default function MainForm({
             <tr className="bg-slate-100">
               <th className="p-2 border w-[80px]">コピー</th>
               <th className="p-2 border w-[100px]">人数 (C列)</th>
-              <th className="p-2 border w-[500px]">所属部署・氏名 (D列)</th>
+              {/* ★ 所属部署の幅を広げ、全体の幅を 1000px に揃える */}
+              <th className="p-2 border w-[740px]">所属部署・氏名 (D列)</th>
               <th className="p-2 border w-[80px]">操作</th>
             </tr>
           </thead>
@@ -500,7 +533,7 @@ export default function MainForm({
                     <span className="text-[10px] text-slate-600">≡掴む≡</span>
                   </div>
                 </td>
-                <td className="p-2 border"><input type="text" name={`client_num_${day}`} value={formData[`client_num_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
+                <td className="p-2 border"><input type="text" inputMode="url" name={`client_num_${day}`} value={formData[`client_num_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
                 <td className="p-2 border"><input type="text" name={`client_name_${day}`} value={formData[`client_name_${day}`] || ''} onChange={handleChange} className="w-full border rounded p-1" /></td>
                 <td className="p-2 border text-center">
                   <button type="button" onClick={() => clearDay(day)} className="border border-rose-500 text-rose-500 px-3 py-1 rounded text-xs hover:bg-rose-500 hover:text-white whitespace-nowrap">クリア</button>
